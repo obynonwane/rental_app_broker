@@ -11,5 +11,5 @@ func TestMain(m *testing.M) {
 	//execute the tests and benchmarks.
 	//It returns an exit code that indicates
 	//whether the tests passed or failed
-	os.Exit(m.Run())
+	os.Exit(m.Run()) // run all of my test
 }

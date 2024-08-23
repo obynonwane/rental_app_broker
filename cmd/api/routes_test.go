@@ -12,9 +12,10 @@ func Test_routes_exist(t *testing.T) {
 	// create instance of Config struct
 	testApp := Config{}
 
-	// calls the routes method on testApp to aobtain the application routes
+	// calls the routes method on testApp to obtain the application routes
+	// chi router have method walks on its type, that lets you walk through the routes to make sure they exist
 	testRoutes := testApp.routes()
-	chiRoutes := testRoutes.(chi.Router)
+	chiRoutes := testRoutes.(chi.Router) // cast testRoutes to type chi.Router
 
 	//list of expected routes in the application
 	routes := []string{

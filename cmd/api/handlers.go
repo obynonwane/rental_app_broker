@@ -484,6 +484,7 @@ func (app *Config) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 
 	app.writeJSON(w, http.StatusOK, payload)
 }
+
 func (app *Config) Subscription(w http.ResponseWriter, r *http.Request) {
 	payload := jsonResponse{
 		Error:   false,
@@ -537,5 +538,59 @@ func (app *Config) TestEmail(w http.ResponseWriter, r *http.Request) {
 	payload.Error = false
 	payload.Message = "mail sent succesfully"
 
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) GetUsers(w http.ResponseWriter, r *http.Request) {
+	log.Println("Reached the get all users")
+
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "getusers")
+	log.Println("The endpoint:", authServiceUrl)
+
+	// Call the service by creating a request
+	request, err := http.NewRequest("GET", authServiceUrl, nil)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+
+	// Create an HTTP client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// Create a variable to read response.Body into
+	var jsonFromService jsonResponse
+
+	// Decode the JSON from the service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	log.Println(response, "the response")
+	// Check if the status code is Accepted
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New("unexpected status code received from service"), nil)
+		return
+	}
+
+	// Prepare the payload
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	// Write the JSON response
 	app.writeJSON(w, http.StatusOK, payload)
 }

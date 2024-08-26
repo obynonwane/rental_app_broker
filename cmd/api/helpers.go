@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log"
 	"net/http"
+	"os"
 )
 
 type jsonResponse struct {
@@ -80,4 +82,55 @@ func (app *Config) errorJSON(w http.ResponseWriter, err error, data any, status 
 	return app.writeJSON(w, statusCode, payload)
 }
 
+func (app *Config) getToken(r *http.Request) (jsonResponse, error) {
+	//get authorization hearder
+	authorizationHeader := r.Header.Get("Authorization")
 
+	// call the service by creating a request
+	// request, err := http.NewRequest("GET", os.Getenv("FILE_UPLOAD_URL")+"upload", nil)
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", os.Getenv("AUTH_URL")+"verify-token", nil)
+
+	if err != nil {
+		return jsonResponse{Error: true, Message: err.Error(), StatusCode: http.StatusBadRequest, Data: nil}, err
+
+	}
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		return jsonResponse{Error: true, Message: err.Error(), StatusCode: http.StatusBadRequest, Data: nil}, err
+
+	}
+	defer response.Body.Close()
+
+	//variable to marshal into
+	var jsonFromService jsonResponse
+
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+
+	log.Println(jsonFromService, "json from service")
+	if err != nil {
+		return jsonResponse{Error: true, Message: err.Error(), StatusCode: http.StatusBadRequest, Data: nil}, err
+	}
+
+	// make a call to the bank-service
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.Message = jsonFromService.Message
+	payload.StatusCode = response.StatusCode
+	payload.Data = jsonFromService.Data
+
+	if jsonFromService.Error {
+		return payload, err
+	}
+
+	return payload, nil
+}

@@ -542,7 +542,22 @@ func (app *Config) TestEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) GetUsers(w http.ResponseWriter, r *http.Request) {
-	log.Println("Reached the get all users")
+
+	response, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+		return
+	}
+
+	app.proceedGetUser(w)
+}
+
+func (app *Config) proceedGetUser(w http.ResponseWriter) {
 
 	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "getusers")
 	log.Println("The endpoint:", authServiceUrl)

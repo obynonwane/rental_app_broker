@@ -32,6 +32,10 @@ type SignupPayload struct {
 	Password  string `json:"password"`
 }
 
+type ChooseRolePayload struct {
+	UserType string `json:"user_type"`
+}
+
 type LoginPayload struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
@@ -608,4 +612,74 @@ func (app *Config) proceedGetUser(w http.ResponseWriter) {
 
 	// Write the JSON response
 	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) ChooseRole(w http.ResponseWriter, r *http.Request) {
+	//extract the request body
+	var requestPayload ChooseRolePayload
+
+	//extract the requestbody
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	log.Println("It reached here")
+	// retrieve authorization token
+	authorizationHeader := r.Header.Get("Authorization")
+
+	// contruct the url
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "choose-role")
+
+	// create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	// check for error
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New("error logging out"), nil)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+
 }

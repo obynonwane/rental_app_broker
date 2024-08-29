@@ -29,6 +29,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/verify-token", app.VerifyToken)
 	mux.Post("/api/v1/authentication/log-out", app.Logout)
 	mux.Get("/api/v1/authentication/verify-email", app.VerifyEmail)
+	mux.Post("/api/v1/authentication/choose-role", app.ChooseRole)
 
 	mux.Post("/api/v1/send-email", app.TestEmail)
 	mux.Post("/", app.Subscription)

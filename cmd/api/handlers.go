@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -459,7 +460,6 @@ func (app *Config) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		log.Println(err, "2")
 		app.errorJSON(w, err, nil)
 		return
 	}
@@ -596,7 +596,6 @@ func (app *Config) proceedGetUser(w http.ResponseWriter) {
 		return
 	}
 
-	log.Println(response, "the response")
 	// Check if the status code is Accepted
 	if response.StatusCode != http.StatusAccepted {
 		app.errorJSON(w, errors.New("unexpected status code received from service"), nil)
@@ -625,7 +624,6 @@ func (app *Config) ChooseRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("It reached here")
 	// retrieve authorization token
 	authorizationHeader := r.Header.Get("Authorization")
 
@@ -665,12 +663,16 @@ func (app *Config) ChooseRole(w http.ResponseWriter, r *http.Request) {
 	// decode the json from the auth service
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 	if err != nil {
+		log.Println(err, "one")
 		app.errorJSON(w, err, nil)
 		return
 	}
 
+	// logStructFields(jsonFromService)
+	logStructFields(response)
+
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("error logging out"), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
@@ -683,3 +685,21 @@ func (app *Config) ChooseRole(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 
 }
+
+// logStructFields logs all fields of a struct dynamically using reflection
+func logStructFields(v interface{}) {
+	val := reflect.ValueOf(v).Elem() // get the underlying value of the pointer
+	typ := val.Type()
+
+	for i := 0; i < val.NumField(); i++ {
+		field := typ.Field(i)
+		value := val.Field(i).Interface()
+
+		log.Printf("%s: %v", field.Name, value)
+	}
+}
+
+//TODO
+// 1. format role & permission into separate arrays
+// 2. Try adding additional permission to a user
+// 3. also extract the additional permission into the permissions array

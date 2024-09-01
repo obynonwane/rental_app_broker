@@ -31,6 +31,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/verify-email", app.VerifyEmail)
 	mux.Post("/api/v1/authentication/choose-role", app.ChooseRole)
 	mux.Get("/api/v1/authentication/product-owner-permissions", app.ProductOwnerPermission)
+	mux.Post("/api/v1/authentication/product-owner-create-staff", app.ProductOwnerCreateStaff)
 
 	mux.Post("/api/v1/send-email", app.TestEmail)
 	mux.Post("/", app.Subscription)

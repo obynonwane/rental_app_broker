@@ -668,9 +668,6 @@ func (app *Config) ChooseRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// logStructFields(jsonFromService)
-	logStructFields(response)
-
 	if response.StatusCode != http.StatusAccepted {
 		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
@@ -729,9 +726,6 @@ func (app *Config) ProductOwnerPermission(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// logStructFields(jsonFromService)
-	logStructFields(response)
-
 	if response.StatusCode != http.StatusAccepted {
 		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
@@ -745,6 +739,79 @@ func (app *Config) ProductOwnerPermission(w http.ResponseWriter, r *http.Request
 
 	app.writeJSON(w, http.StatusOK, payload)
 
+}
+
+func (app *Config) ProductOwnerCreateStaff(w http.ResponseWriter, r *http.Request) {
+
+	//extract the request body
+	var requestPayload SignupPayload
+
+	//extract the requestbody
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		log.Println(err, "-2")
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// retrieve authorization token
+	authorizationHeader := r.Header.Get("Authorization")
+
+	// contruct the url
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "product-owner-create-staff")
+
+	// create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	// check for error
+	if err != nil {
+		log.Println(err, "-1")
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		log.Println(err, "one")
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		log.Println(err, "two")
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
 }
 
 // logStructFields logs all fields of a struct dynamically using reflection

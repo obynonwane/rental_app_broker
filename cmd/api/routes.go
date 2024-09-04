@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 /* returns http.Handler*/
@@ -32,6 +33,8 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/authentication/choose-role", app.ChooseRole)
 	mux.Get("/api/v1/authentication/product-owner-permissions", app.ProductOwnerPermission)
 	mux.Post("/api/v1/authentication/product-owner-create-staff", app.ProductOwnerCreateStaff)
+	// Add the Prometheus metrics endpoint to the router
+	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.Post("/api/v1/send-email", app.TestEmail)
 	mux.Post("/", app.Subscription)

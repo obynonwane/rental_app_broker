@@ -749,32 +749,34 @@ func (app *Config) ProductOwnerCreateStaff(w http.ResponseWriter, r *http.Reques
 	//extract the requestbody
 	err := app.readJSON(w, r, &requestPayload)
 	if err != nil {
-		log.Println(err, "-2")
 		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Validate the request payload
+	if err := app.ValidataSignupInput(requestPayload); len(err) > 0 {
+		app.errorJSON(w, errors.New("error creating user"), err, http.StatusBadRequest)
 		return
 	}
 
 	// retrieve authorization token
 	authorizationHeader := r.Header.Get("Authorization")
 
-	// contruct the url
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "product-owner-create-staff")
-
-	// create some json we will send to authservice
+	//create some json we will send to authservice
 	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "product-owner-create-staff")
 
 	// call the service by creating a request
 	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
 
-	// Set the "Authorization" header with your Bearer token
-	request.Header.Set("authorization", authorizationHeader)
-
-	// check for error
 	if err != nil {
-		log.Println(err, "-1")
 		app.errorJSON(w, err, nil)
 		return
 	}
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
 
 	// Set the Content-Type header
 	request.Header.Set("Content-Type", "application/json")
@@ -782,7 +784,6 @@ func (app *Config) ProductOwnerCreateStaff(w http.ResponseWriter, r *http.Reques
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		log.Println(err)
 		app.errorJSON(w, err, nil)
 		return
 	}
@@ -794,14 +795,14 @@ func (app *Config) ProductOwnerCreateStaff(w http.ResponseWriter, r *http.Reques
 	// decode the json from the auth service
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 	if err != nil {
-		log.Println(err, "one")
 		app.errorJSON(w, err, nil)
 		return
 	}
 
+	log.Println("response from auth service", jsonFromService.Message)
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(err, "two")
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		log.Println(jsonFromService.Message, jsonFromService)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
 		return
 	}
 
@@ -831,3 +832,10 @@ func logStructFields(v interface{}) {
 // 1. format role & permission into separate arrays
 // 2. Try adding additional permission to a user
 // 3. also extract the additional permission into the permissions array
+// 4. Renters staff relationship (table renters_staff (renter_id, user_id, )) - done
+
+// Ask user if they have company
+// if the company is registered or not
+// Ask for CAC number if registered
+// Ask company phone number
+// Ask Company address (state & LGA)

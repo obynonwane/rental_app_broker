@@ -114,97 +114,101 @@ func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 
 func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 
-	// Extract the request body
-	var requestPayload LoginPayload
-	err := app.readJSON(w, r, &requestPayload)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
+	TrackFunctionCall("Login", func() {
 
-	// Validate the request payload
-	if err := app.ValidateLoginInput(requestPayload); len(err) > 0 {
-		app.errorJSON(w, errors.New("error trying to sign-in user"), err, http.StatusBadRequest)
-		return
-	}
-
-	value, err := app.cache.Get(r.Context(), "login_detail").Result()
-	if err != nil {
-		if errors.Is(err, redis.Nil) || err.Error() == "redis: nil" {
-			log.Println("This is a cache miss : logging in")
-			//create some json we will send to authservice
-			jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
-
-			authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "login")
-
-			// call the service by creating a request
-			request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
-
-			if err != nil {
-				app.errorJSON(w, err, nil)
-				return
-			}
-
-			// Set the Content-Type header
-			request.Header.Set("Content-Type", "application/json")
-			//create a http client
-			client := &http.Client{}
-			response, err := client.Do(request)
-			if err != nil {
-				app.errorJSON(w, err, nil)
-				return
-			}
-			defer response.Body.Close()
-
-			// create a varabiel we'll read response.Body into
-			var jsonFromService jsonResponse
-
-			// decode the json from the auth service
-			err = json.NewDecoder(response.Body).Decode(&jsonFromService)
-			if err != nil {
-				app.errorJSON(w, err, nil)
-				return
-			}
-
-			if response.StatusCode != http.StatusAccepted {
-				app.errorJSON(w, errors.New("error signingup user"), nil)
-				return
-			}
-
-			var payload jsonResponse
-			payload.Error = jsonFromService.Error
-			payload.StatusCode = http.StatusOK
-			payload.Message = jsonFromService.Message
-			payload.Data = jsonFromService.Data
-
-			//convert the payload into string
-			b, err := json.Marshal(payload)
-			if err != nil {
-				app.errorJSON(w, errors.New("error marshalling payload into string for saving to redis"), nil)
-				return
-			}
-			//set the value in redis
-			err = app.cache.Set(ctx, "login_detail", bytes.NewBuffer(b).Bytes(), time.Second*15).Err()
-			if err != nil {
-				fmt.Printf("error setting data & key to redis cache: %v\n", err)
-			}
-			app.writeJSON(w, http.StatusOK, payload)
+		// Extract the request body
+		var requestPayload LoginPayload
+		err := app.readJSON(w, r, &requestPayload)
+		if err != nil {
+			app.errorJSON(w, err, nil)
 			return
 		}
 
-	} else {
-
-		var data jsonResponse
-		err := json.Unmarshal(bytes.NewBufferString(value).Bytes(), &data)
-		if err != nil {
-			app.errorJSON(w, errors.New("error unmarshalling data from redis"), nil)
+		// Validate the request payload
+		if err := app.ValidateLoginInput(requestPayload); len(err) > 0 {
+			app.errorJSON(w, errors.New("error trying to sign-in user"), err, http.StatusBadRequest)
+			return
 		}
 
-		log.Println("This is a cache hit : logging in")
-		app.writeJSON(w, http.StatusOK, data)
-		return
-	}
-	app.errorJSON(w, err, nil)
+		value, err := app.cache.Get(r.Context(), "login_detail").Result()
+		if err != nil {
+			if errors.Is(err, redis.Nil) || err.Error() == "redis: nil" {
+				log.Println("This is a cache miss : logging in")
+				//create some json we will send to authservice
+				jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+				authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "login")
+
+				// call the service by creating a request
+				request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
+
+				if err != nil {
+					app.errorJSON(w, err, nil)
+					return
+				}
+
+				// Set the Content-Type header
+				request.Header.Set("Content-Type", "application/json")
+				//create a http client
+				client := &http.Client{}
+				response, err := client.Do(request)
+				if err != nil {
+					app.errorJSON(w, err, nil)
+					return
+				}
+				defer response.Body.Close()
+
+				// create a varabiel we'll read response.Body into
+				var jsonFromService jsonResponse
+
+				// decode the json from the auth service
+				err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+				if err != nil {
+					app.errorJSON(w, err, nil)
+					return
+				}
+
+				if response.StatusCode != http.StatusAccepted {
+					app.errorJSON(w, errors.New("error signingup user"), nil)
+					return
+				}
+
+				var payload jsonResponse
+				payload.Error = jsonFromService.Error
+				payload.StatusCode = http.StatusOK
+				payload.Message = jsonFromService.Message
+				payload.Data = jsonFromService.Data
+
+				//convert the payload into string
+				b, err := json.Marshal(payload)
+				if err != nil {
+					app.errorJSON(w, errors.New("error marshalling payload into string for saving to redis"), nil)
+					return
+				}
+				//set the value in redis
+				err = app.cache.Set(ctx, "login_detail", bytes.NewBuffer(b).Bytes(), time.Second*15).Err()
+				if err != nil {
+					fmt.Printf("error setting data & key to redis cache: %v\n", err)
+				}
+				app.writeJSON(w, http.StatusOK, payload)
+				return
+			}
+
+		} else {
+
+			var data jsonResponse
+			err := json.Unmarshal(bytes.NewBufferString(value).Bytes(), &data)
+			if err != nil {
+				app.errorJSON(w, errors.New("error unmarshalling data from redis"), nil)
+			}
+
+			log.Println("This is a cache hit : logging in")
+			app.writeJSON(w, http.StatusOK, data)
+			return
+		}
+		app.errorJSON(w, err, nil)
+
+	})
 
 }
 

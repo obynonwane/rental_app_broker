@@ -24,6 +24,9 @@ func main() {
 		cache: cache,
 	}
 
+	// Start collecting system metrics in the background
+	go CollectSystemMetrics()
+
 	log.Printf("starting broker service on port %s\n", webPort)
 	//define http server
 	srv := &http.Server{

@@ -12,6 +12,8 @@ import (
 /* returns http.Handler*/
 func (app *Config) routes() http.Handler {
 	mux := chi.NewRouter()
+	// Redirect or clean paths with trailing slashes
+	mux.Use(middleware.RedirectSlashes)
 
 	//specify who is allowed to connect
 	mux.Use(cors.Handler(cors.Options{
@@ -22,6 +24,7 @@ func (app *Config) routes() http.Handler {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
+	mux.Post("/", app.Subscription)
 
 	mux.Use(middleware.Heartbeat("/ping"))
 	mux.Post("/api/v1/authentication/signup", app.Signup)
@@ -37,7 +40,6 @@ func (app *Config) routes() http.Handler {
 	mux.Handle("/metrics", promhttp.Handler())
 
 	mux.Post("/api/v1/send-email", app.TestEmail)
-	mux.Post("/", app.Subscription)
 
 	//Inventory routes---------------------------------------------------//
 	mux.Get("/api/v1/inventory/getusers", app.GetUsers)

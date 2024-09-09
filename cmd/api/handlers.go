@@ -113,6 +113,7 @@ func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
+	log.Println("hit the login endpoint")
 
 	TrackFunctionCall("Login", func() {
 
@@ -494,6 +495,7 @@ func (app *Config) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) Subscription(w http.ResponseWriter, r *http.Request) {
+	log.Println("hit the subscription endpoint")
 	payload := jsonResponse{
 		Error:   false,
 		Message: "hit the broker change",

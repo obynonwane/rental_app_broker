@@ -13,7 +13,7 @@ import (
 func (app *Config) routes() http.Handler {
 	mux := chi.NewRouter()
 	// Redirect or clean paths with trailing slashes
-	mux.Use(middleware.RedirectSlashes)
+	// mux.Use(middleware.RedirectSlashes)
 
 	//specify who is allowed to connect
 	mux.Use(cors.Handler(cors.Options{

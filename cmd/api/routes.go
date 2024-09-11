@@ -24,7 +24,6 @@ func (app *Config) routes() http.Handler {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
-	mux.Post("/", app.Subscription)
 
 	mux.Use(middleware.Heartbeat("/ping"))
 	mux.Post("/api/v1/authentication/signup", app.Signup)
@@ -36,13 +35,16 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/authentication/choose-role", app.ChooseRole)
 	mux.Get("/api/v1/authentication/product-owner-permissions", app.ProductOwnerPermission)
 	mux.Post("/api/v1/authentication/product-owner-create-staff", app.ProductOwnerCreateStaff)
-	// Add the Prometheus metrics endpoint to the router
-	mux.Handle("/metrics", promhttp.Handler())
+
+	mux.Post("/", app.Subscription)
 
 	mux.Post("/api/v1/send-email", app.TestEmail)
 
 	//Inventory routes---------------------------------------------------//
 	mux.Get("/api/v1/inventory/getusers", app.GetUsers)
+
+	// Add the Prometheus metrics endpoint to the router-----------------//
+	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
 }

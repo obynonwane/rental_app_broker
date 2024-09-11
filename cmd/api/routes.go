@@ -35,6 +35,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/authentication/choose-role", app.ChooseRole)
 	mux.Get("/api/v1/authentication/product-owner-permissions", app.ProductOwnerPermission)
 	mux.Post("/api/v1/authentication/product-owner-create-staff", app.ProductOwnerCreateStaff)
+	mux.Post("/api/v1/authentication/assign-permission", app.ProductOwnerAssignPermission)
 
 	mux.Post("/", app.Subscription)
 

@@ -11,6 +11,7 @@ const (
 	minFirstNameLen = 2
 	minLastNameLen  = 2
 	minPhoneLen     = 10
+	iniqueIDLen     = 36
 )
 
 func (app *Config) ValidateLoginInput(req LoginPayload) map[string]string {
@@ -52,6 +53,20 @@ func (app *Config) ValidataSignupInput(req SignupPayload) map[string]string {
 
 	if !isEmailValid(req.Email) {
 		errors["email"] = fmt.Sprintf("%s supplied is invalid", "email")
+	}
+
+	return errors
+}
+
+func (app *Config) ValidataAssignPermission(req AssignPermissionPayload) map[string]string {
+
+	errors := map[string]string{}
+	if len(req.UserID) < iniqueIDLen {
+		errors["user_id"] = fmt.Sprintf("invalid user selected")
+	}
+
+	if len(req.PermissionID) < iniqueIDLen {
+		errors["permission_id"] = fmt.Sprintf("invalid permission selected")
 	}
 
 	return errors

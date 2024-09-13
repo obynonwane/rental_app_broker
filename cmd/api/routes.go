@@ -36,6 +36,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/product-owner-permissions", app.ProductOwnerPermission)
 	mux.Post("/api/v1/authentication/product-owner-create-staff", app.ProductOwnerCreateStaff)
 	mux.Post("/api/v1/authentication/assign-permission", app.ProductOwnerAssignPermission)
+	mux.Get("/api/v1/authentication/countries", app.GetCountries)
 
 	mux.Post("/", app.Subscription)
 

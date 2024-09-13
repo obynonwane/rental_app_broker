@@ -900,6 +900,64 @@ func (app *Config) ProductOwnerAssignPermission(w http.ResponseWriter, r *http.R
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+func (app *Config) GetCountries(w http.ResponseWriter, r *http.Request) {
+
+	// retrieve authorization token
+	authorizationHeader := r.Header.Get("Authorization")
+
+	// contruct the url
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "countries")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", authServiceUrl, nil)
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	// check for error
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		log.Println(err, "one")
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+
+}
+
 // logStructFields logs all fields of a struct dynamically using reflection
 func logStructFields(v interface{}) {
 	val := reflect.ValueOf(v).Elem() // get the underlying value of the pointer
@@ -914,10 +972,11 @@ func logStructFields(v interface{}) {
 }
 
 //TODO
-// 1. format role & permission into separate arrays
-// 2. Try adding additional permission to a user
-// 3. also extract the additional permission into the permissions array
+// 1. format role & permission into separate arrays - done
+// 2. Try adding additional permission to a user - done
+// 3. also extract the additional permission into the permissions array - done
 // 4. Renters staff relationship (table renters_staff (renter_id, user_id, )) - done
+// 5. Extract the user who added you
 
 // Ask user if they have company
 // if the company is registered or not

@@ -39,6 +39,8 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/countries", app.GetCountries)
 	mux.Get("/api/v1/authentication/states", app.GetStates)
 	mux.Get("/api/v1/authentication/lgas", app.GetLgas)
+	mux.Get("/api/v1/authentication/country/state/{id}", app.GetCountryState)
+	mux.Get("/api/v1/authentication/state/lgas/{id}", app.GetStateLga)
 
 	mux.Post("/", app.Subscription)
 

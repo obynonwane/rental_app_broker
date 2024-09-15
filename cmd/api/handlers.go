@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis"
 )
 
@@ -1066,6 +1067,133 @@ func (app *Config) GetLgas(w http.ResponseWriter, r *http.Request) {
 
 	app.writeJSON(w, http.StatusOK, payload)
 
+}
+
+func (app *Config) GetCountryState(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		app.errorJSON(w, errors.New("id parameter is missing"), nil)
+		return
+	}
+
+	// Retrieve authorization token
+	authorizationHeader := r.Header.Get("Authorization")
+	if authorizationHeader == "" {
+		app.errorJSON(w, errors.New("authorization token is missing"), nil)
+		return
+	}
+
+	// Construct the URL
+	authServiceUrl := fmt.Sprintf("%s%s%s", os.Getenv("AUTH_URL"), "country/state/", id)
+
+	log.Println(authServiceUrl, "url")
+
+	// Call the service by creating a request
+	request, err := http.NewRequest("GET", authServiceUrl, nil)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Authorization and Content-Type headers
+	request.Header.Set("Authorization", authorizationHeader)
+	request.Header.Set("Content-Type", "application/json")
+
+	// Create an HTTP client and execute the request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// Decode the JSON response
+	var jsonFromService jsonResponse
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	// Send the successful response
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) GetStateLga(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		app.errorJSON(w, errors.New("id parameter is missing"), nil)
+		return
+	}
+
+	// Retrieve authorization token
+	authorizationHeader := r.Header.Get("Authorization")
+	if authorizationHeader == "" {
+		app.errorJSON(w, errors.New("authorization token is missing"), nil)
+		return
+	}
+
+	// Construct the URL
+	authServiceUrl := fmt.Sprintf("%s%s%s", os.Getenv("AUTH_URL"), "state/lgas/", id)
+	log.Println(authServiceUrl, "url")
+
+	// Call the service by creating a request
+	request, err := http.NewRequest("GET", authServiceUrl, nil)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Authorization and Content-Type headers
+	request.Header.Set("Authorization", authorizationHeader)
+	request.Header.Set("Content-Type", "application/json")
+
+	// Create an HTTP client and execute the request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// Decode the JSON response
+	var jsonFromService jsonResponse
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	// Send the successful response
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
 }
 
 // logStructFields logs all fields of a struct dynamically using reflection

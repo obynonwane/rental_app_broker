@@ -41,6 +41,8 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/lgas", app.GetLgas)
 	mux.Get("/api/v1/authentication/country/state/{id}", app.GetCountryState)
 	mux.Get("/api/v1/authentication/state/lgas/{id}", app.GetStateLga)
+	mux.Post("/api/v1/authentication/kyc-renter", app.KycRenter)
+	mux.Get("/api/v1/authentication/retrieve-identification-types", app.RetriveIdentificationTypes)
 
 	mux.Post("/", app.Subscription)
 

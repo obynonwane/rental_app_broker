@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"reflect"
@@ -1194,6 +1196,202 @@ func (app *Config) GetStateLga(w http.ResponseWriter, r *http.Request) {
 	payload.Data = jsonFromService.Data
 
 	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) KycRenter(w http.ResponseWriter, r *http.Request) {
+	// Parse the multipart form
+	err := r.ParseMultipartForm(10 << 20) // Limit to 10 MB
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Retrieve the file from the form data
+	file, fileHeader, err := r.FormFile("file")
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer file.Close()
+
+	// Copy file data into a buffer
+	var fileBuffer bytes.Buffer
+	_, err = io.Copy(&fileBuffer, file)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Retrieve additional form fields
+	address := r.FormValue("address")
+	idNumber := r.FormValue("id_number")
+	idType := r.FormValue("id_type")
+	addressCountry := r.FormValue("address_country")
+	addressState := r.FormValue("address_state")
+	addressLga := r.FormValue("address_lga")
+
+	// Retrieve the Bearer token from the Authorization header
+	bearerToken := r.Header.Get("Authorization")
+	if bearerToken == "" {
+		app.errorJSON(w, errors.New("authorization header missing"), nil, http.StatusUnauthorized)
+		return
+	}
+
+	// Forward the file, form fields, and token to the NestJS service
+	app.forwardDataToNestJS(w, &fileBuffer, fileHeader.Filename, address, idNumber, idType, addressCountry, addressState, addressLga, bearerToken)
+}
+
+func (app *Config) forwardDataToNestJS(
+	w http.ResponseWriter,
+	fileData *bytes.Buffer,
+	originalFileName string,
+	address string,
+	idNumber string,
+	idType string,
+	addressCountry string,
+	addressState string,
+	addressLga string,
+	bearerToken string,
+) {
+	// URL of the auth service
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "renter-kyc")
+
+	// Create a new multipart writer
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	// Add the file to the request body using the original file name
+	fileWriter, err := writer.CreateFormFile("file", originalFileName)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	_, err = io.Copy(fileWriter, fileData)
+	if err != nil {
+
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Add the additional form fields
+	_ = writer.WriteField("address", address)
+	_ = writer.WriteField("id_number", idNumber)
+	_ = writer.WriteField("id_type", idType)
+	_ = writer.WriteField("address_country", addressCountry)
+	_ = writer.WriteField("address_state", addressState)
+	_ = writer.WriteField("address_lga", addressLga)
+	_ = writer.WriteField("bearer_token", bearerToken)
+
+	// Close the writer to finalize the request body
+	writer.Close()
+
+	// Create a new POST request
+	req, err := http.NewRequest("POST", authServiceUrl, &requestBody)
+	if err != nil {
+
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set headers
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Authorization", bearerToken) // Include the Bearer token
+
+	// Create an HTTP client and execute the request
+	client := &http.Client{}
+	response, err := client.Do(req)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// Decode the JSON response
+	var jsonFromService jsonResponse
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		log.Println(err, 2)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Check if the response status is not accepted
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	// If successful, send the JSON response back to the caller using writeJSON
+	payload := jsonResponse{
+		Error:      jsonFromService.Error,
+		StatusCode: http.StatusOK,
+		Message:    jsonFromService.Message,
+		Data:       jsonFromService.Data,
+	}
+
+	// Use the writeJSON utility function to return the response
+	err = app.writeJSON(w, http.StatusOK, payload)
+	if err != nil {
+		log.Println(err, "0")
+		app.errorJSON(w, err, nil)
+	}
+}
+
+func (app *Config) RetriveIdentificationTypes(w http.ResponseWriter, r *http.Request) {
+
+	log.Println("I reached here too")
+	// retrieve authorization token
+	authorizationHeader := r.Header.Get("Authorization")
+
+	// contruct the url
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "retrieve-identification-types")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", authServiceUrl, nil)
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	// check for error
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+
 }
 
 // logStructFields logs all fields of a struct dynamically using reflection

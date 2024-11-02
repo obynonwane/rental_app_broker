@@ -50,6 +50,16 @@ type LoginPayload struct {
 	Password string `json:"password" validate:"required"`
 }
 
+type BusinessKycPayload struct {
+	BusinessRegistered string `json:"business_registered"`
+	CacNumber          string `json:"cac_number"`
+	DisplayName        string `json:"display_name"`
+	AddressCountry     string `json:"address_country"`
+	AddressState       string `json:"address_state"`
+	AddressLga         string `json:"address_lga"`
+	AddressStreet      string `json:"address_street"`
+}
+
 func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 
 	//extract the request body
@@ -1392,6 +1402,74 @@ func (app *Config) RetriveIdentificationTypes(w http.ResponseWriter, r *http.Req
 
 	app.writeJSON(w, http.StatusOK, payload)
 
+}
+
+func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
+
+	//extract the request body
+	var requestPayload BusinessKycPayload
+
+	//extract the requestbody
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "kyc-product-owner")
+
+	//get authorization hearder
+	authorizationHeader := r.Header.Get("Authorization")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	log.Println("response from auth service", jsonFromService)
+	if response.StatusCode != http.StatusAccepted {
+		log.Println(jsonFromService.Message, jsonFromService)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
 }
 
 // logStructFields logs all fields of a struct dynamically using reflection

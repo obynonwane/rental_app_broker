@@ -44,7 +44,9 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/authentication/kyc-renter", app.KycRenter)
 	mux.Post("/api/v1/authentication/kyc-product-owner", app.KycBusiness)
 	mux.Get("/api/v1/authentication/retrieve-identification-types", app.RetriveIdentificationTypes)
-	mux.Get("/api/v1/authentication/admin/signup", app.SignupAdmin)
+
+	mux.Post("/api/v1/authentication/admin/login", app.LoginAdmin)
+	mux.Post("/api/v1/authentication/admin/signup", app.SignupAdmin)
 
 	mux.Post("/", app.Subscription)
 

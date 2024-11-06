@@ -27,6 +27,7 @@ func (app *Config) routes() http.Handler {
 
 	mux.Use(middleware.Heartbeat("/ping"))
 	mux.Post("/api/v1/authentication/signup", app.Signup)
+	mux.Post("/api/v1/authentication/admin/signup", app.SignupAdmin)
 	mux.Post("/api/v1/authentication/login", app.Login)
 	mux.Get("/api/v1/authentication/get-me", app.GetMe)
 	mux.Get("/api/v1/authentication/verify-token", app.VerifyToken)
@@ -44,9 +45,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/authentication/kyc-renter", app.KycRenter)
 	mux.Post("/api/v1/authentication/kyc-product-owner", app.KycBusiness)
 	mux.Get("/api/v1/authentication/retrieve-identification-types", app.RetriveIdentificationTypes)
-
-	mux.Post("/api/v1/authentication/admin/login", app.LoginAdmin)
-	mux.Post("/api/v1/authentication/admin/signup", app.SignupAdmin)
+	mux.Get("/api/v1/authentication/list-user-type", app.ListUserTypes)
 
 	mux.Post("/", app.Subscription)
 

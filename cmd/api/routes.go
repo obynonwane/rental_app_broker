@@ -43,7 +43,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/country/state/{id}", app.GetCountryState)
 	mux.Get("/api/v1/authentication/state/lgas/{id}", app.GetStateLga)
 	mux.Post("/api/v1/authentication/kyc-renter", app.KycRenter)
-	mux.Post("/api/v1/authentication/kyc-product-owner", app.KycBusiness)
+	mux.Post("/api/v1/authentication/kyc-participant", app.KycBusiness)
 	mux.Get("/api/v1/authentication/retrieve-identification-types", app.RetriveIdentificationTypes)
 	mux.Get("/api/v1/authentication/list-user-type", app.ListUserTypes)
 

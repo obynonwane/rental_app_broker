@@ -1474,7 +1474,7 @@ func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
 	//create some json we will send to authservice
 	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
 
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "kyc-product-owner")
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "kyc-participant")
 
 	//get authorization hearder
 	authorizationHeader := r.Header.Get("Authorization")

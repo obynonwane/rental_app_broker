@@ -494,7 +494,7 @@ func (app *Config) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("error verifying email"), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
 		return
 	}
 

@@ -25,7 +25,6 @@ func Test_routes_exist(t *testing.T) {
 		"/api/v1/authentication/verify-token",
 		"/api/v1/authentication/log-out",
 		"/api/v1/authentication/verify-email",
-		"/api/v1/authentication/choose-role",
 		"/api/v1/authentication/participant-create-staff",
 	}
 

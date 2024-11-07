@@ -34,16 +34,16 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/authentication/log-out", app.Logout)
 	mux.Get("/api/v1/authentication/verify-email", app.VerifyEmail)
 	mux.Post("/api/v1/authentication/choose-role", app.ChooseRole)
-	mux.Get("/api/v1/authentication/product-owner-permissions", app.ProductOwnerPermission)
-	mux.Post("/api/v1/authentication/product-owner-create-staff", app.ProductOwnerCreateStaff)
-	mux.Post("/api/v1/authentication/assign-permission", app.ProductOwnerAssignPermission)
+
+	mux.Post("/api/v1/authentication/participant-create-staff", app.ParticipantCreateStaff)
+
 	mux.Get("/api/v1/authentication/countries", app.GetCountries)
 	mux.Get("/api/v1/authentication/states", app.GetStates)
 	mux.Get("/api/v1/authentication/lgas", app.GetLgas)
 	mux.Get("/api/v1/authentication/country/state/{id}", app.GetCountryState)
 	mux.Get("/api/v1/authentication/state/lgas/{id}", app.GetStateLga)
 	mux.Post("/api/v1/authentication/kyc-renter", app.KycRenter)
-	mux.Post("/api/v1/authentication/kyc-participant", app.KycBusiness)
+	mux.Post("/api/v1/authentication/kyc-business", app.KycBusiness)
 	mux.Get("/api/v1/authentication/retrieve-identification-types", app.RetriveIdentificationTypes)
 	mux.Get("/api/v1/authentication/list-user-type", app.ListUserTypes)
 

@@ -707,65 +707,7 @@ func (app *Config) ChooseRole(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (app *Config) ProductOwnerPermission(w http.ResponseWriter, r *http.Request) {
-
-	// retrieve authorization token
-	authorizationHeader := r.Header.Get("Authorization")
-
-	// contruct the url
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "product-owner-permissions")
-
-	// call the service by creating a request
-	request, err := http.NewRequest("GET", authServiceUrl, nil)
-
-	// Set the "Authorization" header with your Bearer token
-	request.Header.Set("authorization", authorizationHeader)
-
-	// check for error
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	// Set the Content-Type header
-	request.Header.Set("Content-Type", "application/json")
-	//create a http client
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Println(err)
-		app.errorJSON(w, err, nil)
-		return
-	}
-	defer response.Body.Close()
-
-	// create a varabiel we'll read response.Body into
-	var jsonFromService jsonResponse
-
-	// decode the json from the auth service
-	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
-	if err != nil {
-		log.Println(err, "one")
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
-		return
-	}
-
-	var payload jsonResponse
-	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
-	payload.Message = jsonFromService.Message
-	payload.Data = jsonFromService.Data
-
-	app.writeJSON(w, http.StatusOK, payload)
-
-}
-
-func (app *Config) ProductOwnerCreateStaff(w http.ResponseWriter, r *http.Request) {
+func (app *Config) ParticipantCreateStaff(w http.ResponseWriter, r *http.Request) {
 
 	//extract the request body
 	var requestPayload SignupPayload
@@ -789,81 +731,7 @@ func (app *Config) ProductOwnerCreateStaff(w http.ResponseWriter, r *http.Reques
 	//create some json we will send to authservice
 	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
 
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "product-owner-create-staff")
-
-	// call the service by creating a request
-	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
-
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	// Set the "Authorization" header with your Bearer token
-	request.Header.Set("authorization", authorizationHeader)
-
-	// Set the Content-Type header
-	request.Header.Set("Content-Type", "application/json")
-	//create a http client
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-	defer response.Body.Close()
-
-	// create a varabiel we'll read response.Body into
-	var jsonFromService jsonResponse
-
-	// decode the json from the auth service
-	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	log.Println("response from auth service", jsonFromService.Message)
-	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
-		return
-	}
-
-	var payload jsonResponse
-	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
-	payload.Message = jsonFromService.Message
-	payload.Data = jsonFromService.Data
-
-	app.writeJSON(w, http.StatusOK, payload)
-}
-
-func (app *Config) ProductOwnerAssignPermission(w http.ResponseWriter, r *http.Request) {
-
-	//extract the request body
-	var requestPayload AssignPermissionPayload
-
-	//extract the requestbody
-	err := app.readJSON(w, r, &requestPayload)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	// Validate the request payload
-	if err := app.ValidataAssignPermission(requestPayload); len(err) > 0 {
-		app.errorJSON(w, errors.New("error assignin user permission"), err, http.StatusBadRequest)
-		return
-	}
-
-	// retrieve authorization token
-	authorizationHeader := r.Header.Get("Authorization")
-
-	//create some json we will send to authservice
-	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
-
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "assign-permission")
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "participant-create-staff")
 
 	// call the service by creating a request
 	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
@@ -1474,7 +1342,7 @@ func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
 	//create some json we will send to authservice
 	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
 
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "kyc-participant")
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "kyc-business")
 
 	//get authorization hearder
 	authorizationHeader := r.Header.Get("Authorization")

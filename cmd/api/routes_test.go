@@ -26,8 +26,7 @@ func Test_routes_exist(t *testing.T) {
 		"/api/v1/authentication/log-out",
 		"/api/v1/authentication/verify-email",
 		"/api/v1/authentication/choose-role",
-		"/api/v1/authentication/product-owner-permissions",
-		"/api/v1/authentication/product-owner-create-staff",
+		"/api/v1/authentication/participant-create-staff",
 	}
 
 	// loops through above list calling routesExist to verify their existance

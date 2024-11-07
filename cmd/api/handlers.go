@@ -36,11 +36,6 @@ type SignupPayload struct {
 	Password  string `json:"password"`
 }
 
-type AssignPermissionPayload struct {
-	UserID       string `json:"user_id"`
-	PermissionID string `json:"permission_id"`
-}
-
 type ChooseRolePayload struct {
 	UserType string `json:"user_type"`
 }

@@ -58,20 +58,6 @@ func (app *Config) ValidataSignupInput(req SignupPayload) map[string]string {
 	return errors
 }
 
-func (app *Config) ValidataAssignPermission(req AssignPermissionPayload) map[string]string {
-
-	errors := map[string]string{}
-	if len(req.UserID) < iniqueIDLen {
-		errors["user_id"] = fmt.Sprintf("invalid user selected")
-	}
-
-	if len(req.PermissionID) < iniqueIDLen {
-		errors["permission_id"] = fmt.Sprintf("invalid permission selected")
-	}
-
-	return errors
-}
-
 func isEmailValid(e string) bool {
 	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 	return emailRegex.MatchString(e)

@@ -36,6 +36,15 @@ type SignupPayload struct {
 	Password  string `json:"password"`
 }
 
+type CreateStaffPayload struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Phone     string `json:"phone"`
+	Password  string `json:"password"`
+	Role      string `json:"role"`
+}
+
 type ChooseRolePayload struct {
 	UserType string `json:"user_type"`
 }
@@ -635,7 +644,7 @@ func (app *Config) proceedGetUser(w http.ResponseWriter) {
 func (app *Config) ParticipantCreateStaff(w http.ResponseWriter, r *http.Request) {
 
 	//extract the request body
-	var requestPayload SignupPayload
+	var requestPayload CreateStaffPayload
 
 	//extract the requestbody
 	err := app.readJSON(w, r, &requestPayload)
@@ -645,7 +654,7 @@ func (app *Config) ParticipantCreateStaff(w http.ResponseWriter, r *http.Request
 	}
 
 	// Validate the request payload
-	if err := app.ValidataSignupInput(requestPayload); len(err) > 0 {
+	if err := app.ValidateCreateStaffInput(requestPayload); len(err) > 0 {
 		app.errorJSON(w, errors.New("error creating user"), err, http.StatusBadRequest)
 		return
 	}

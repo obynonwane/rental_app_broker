@@ -183,7 +183,7 @@ func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if response.StatusCode != http.StatusAccepted {
-					app.errorJSON(w, errors.New("error signingup user"), nil)
+					app.errorJSON(w, errors.New(jsonFromService.Message), nil)
 					return
 				}
 
@@ -272,7 +272,7 @@ func (app *Config) GetMe(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if response.StatusCode != http.StatusAccepted {
-				app.errorJSON(w, errors.New("error signingup user"), nil)
+				app.errorJSON(w, errors.New(jsonFromService.Message), nil)
 				return
 			}
 
@@ -1057,7 +1057,7 @@ func (app *Config) forwardDataToNestJS(
 	bearerToken string,
 ) {
 	// URL of the auth service
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "renter-kyc")
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "kyc-renter")
 
 	// Create a new multipart writer
 	var requestBody bytes.Buffer

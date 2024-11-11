@@ -1461,6 +1461,45 @@ func (app *Config) logItemViaRPC(w http.ResponseWriter, l LogPayload) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+// UserDTO is a data transfer object to match the server's User structure
+type UserDTO struct {
+	ID        string    `json:"id"`
+	Email     string    `json:"email"`
+	FirstName string    `json:"first_name,omitempty"`
+	LastName  string    `json:"last_name,omitempty"`
+	Verified  bool      `json:"verified"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+func (app *Config) GetUsersViaRPC(w http.ResponseWriter, r *http.Request) {
+	app.RetrieveUserViaRPC(w)
+}
+
+func (app *Config) RetrieveUserViaRPC(w http.ResponseWriter) {
+	client, err := rpc.Dial("tcp", "inventory-service:5001")
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	var jsonData []UserDTO
+	err = client.Call("RPCServer.RetrieveUsers", struct{}{}, &jsonData)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:      false,
+		Message:    "data retrieved successfully",
+		StatusCode: http.StatusOK,
+		Data:       jsonData,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
 //TODO
 // 1. format role & permission into separate arrays - done
 // 2. Try adding additional permission to a user - done

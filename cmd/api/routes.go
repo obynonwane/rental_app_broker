@@ -46,6 +46,8 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/retrieve-identification-types", app.RetriveIdentificationTypes)
 	mux.Get("/api/v1/authentication/list-user-type", app.ListUserTypes)
 
+	mux.Get("/api/v1/authentication/test-rpc", app.testRPC)
+
 	mux.Post("/", app.Subscription)
 
 	mux.Post("/api/v1/send-email", app.TestEmail)

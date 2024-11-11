@@ -10,6 +10,7 @@ import (
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/rpc"
 	"os"
 	"reflect"
 	"time"
@@ -62,6 +63,15 @@ type BusinessKycPayload struct {
 	AddressState       string `json:"address_state"`
 	AddressLga         string `json:"address_lga"`
 	AddressStreet      string `json:"address_street"`
+}
+
+type LogPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
+type RPCPayload struct {
+	Name string
+	Data string
 }
 
 func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
@@ -1410,6 +1420,45 @@ func logStructFields(v interface{}) {
 
 		log.Printf("%s: %v", field.Name, value)
 	}
+}
+
+func (app *Config) testRPC(w http.ResponseWriter, r *http.Request) {
+
+	data := LogPayload{
+		Name: "testing",
+		Data: "The data",
+	}
+	app.logItemViaRPC(w, data)
+}
+
+func (app *Config) logItemViaRPC(w http.ResponseWriter, l LogPayload) {
+	// 1. get the RPC client
+	client, err := rpc.Dial("tcp", "logging-service:5001")
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// 2. create a payload exact as the type the rpc remote server expects
+	rpcPayload := RPCPayload{
+		Name: l.Name,
+		Data: l.Data,
+	}
+
+	// 3. result to be received from the remote rpc call
+	var result string
+	err = client.Call("RPCServer.LogInfo", rpcPayload, &result)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: result,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
 }
 
 //TODO

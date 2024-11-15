@@ -1,14 +1,18 @@
 module github.com/obynonwane/broker-service
 
-go 1.21.0
+go 1.22.7
+
+toolchain go1.22.9
 
 require (
 	github.com/go-chi/chi v1.5.5
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/obynonwane/rental-service-proto v0.0.0-20241114092027-65d33af90d69
 	github.com/prometheus/client_golang v1.20.2
 	github.com/redis/go-redis/v9 v9.5.3
+	google.golang.org/grpc v1.68.0
 )
 
 require (
@@ -22,6 +26,9 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	golang.org/x/sys v0.22.0 // indirect
-	google.golang.org/protobuf v1.34.2 // indirect
+	golang.org/x/net v0.29.0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
+	google.golang.org/protobuf v1.35.1 // indirect
 )

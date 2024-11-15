@@ -17,6 +17,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis"
+	"github.com/obynonwane/rental-service-proto/inventory"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var ctx = context.Background()
@@ -1498,6 +1501,177 @@ func (app *Config) RetrieveUserViaRPC(w http.ResponseWriter) {
 	}
 
 	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
+
+	err := r.ParseMultipartForm(20 << 20)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	category_id := r.FormValue("category_id")
+	sub_category_id := r.FormValue("sub_category_id")
+	name := r.FormValue("name")
+	description := r.FormValue("description")
+	var images []*inventory.ImageData
+
+	log.Println(category_id)
+	log.Println(sub_category_id)
+	log.Println(name)
+	log.Println(description)
+
+	// Iterate over all files with the key "images"
+	files := r.MultipartForm.File["images"]
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			http.Error(w, "Error reading image file", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// Read file content into a buffer
+		var imageData bytes.Buffer
+		_, err = io.Copy(&imageData, file)
+		if err != nil {
+			app.errorJSON(w, errors.New("error reading image data"), nil)
+			return
+		}
+
+		// Detect MIME type of the image
+		imageType := http.DetectContentType(imageData.Bytes()[:512]) // Inspect the first 512 bytes
+
+		// Log detected MIME type for debugging purposes
+		log.Printf("Detected MIME type: %s\n", imageType)
+
+		// Append to images array for gRPC request
+		images = append(images, &inventory.ImageData{
+			ImageData: imageData.Bytes(),
+			ImageType: imageType, // Example MIME type; adjust as necessary
+		})
+	}
+
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// leave connection open forever
+	defer conn.Close()
+
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+
+	// leave cancel
+	defer cancel()
+
+	data, err := c.CreateInventory(ctx, &inventory.CreateInventoryRequest{
+		CategoryId:    category_id,
+		SubCategoryId: sub_category_id,
+		Name:          name,
+		Description:   description,
+		Images:        images,
+	})
+
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = data.Error
+	payload.Message = data.Message
+	payload.StatusCode = 200
+	payload.Data = data
+
+	app.writeJSON(w, http.StatusAccepted, payload)
+
+}
+
+// func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
+// 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+// 	if err != nil {
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
+// 	defer conn.Close()
+
+// 	log.Println("reached the getusers")
+
+// 	c := inventory.NewInventoryServiceClient(conn)
+// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+// 	defer cancel()
+
+// 	// Call the GetUsers method
+// 	data, err := c.GetUsers(ctx, &inventory.EmptyRequest{})
+
+// 	log.Println(data, "the data")
+// 	if err != nil {
+// 		log.Println(err, "the error")
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
+
+// 	// Assuming data.Users is a slice of users, you might want to adjust this
+// 	var payload jsonResponse
+// 	payload.Error = false
+// 	payload.Message = "User details retrieved successfully"
+// 	payload.Data = data.Users // Adjust based on actual response structure
+
+// 	app.writeJSON(w, http.StatusAccepted, payload)
+// }
+
+func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
+	// get a gRPC client and dial using tcp
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	// Channel to receive the response from the goroutine
+	responseChannel := make(chan *inventory.UserListResponse)
+	errorChannel := make(chan error)
+
+	// Call the GetUsers method asynchronously in a goroutine
+	go func() {
+		data, err := c.GetUsers(ctx, &inventory.EmptyRequest{})
+		if err != nil {
+			errorChannel <- err // Send error to the error channel
+			return
+		}
+		responseChannel <- data // Send the response to the response channel
+	}()
+
+	// Wait for either the response, error, or timeout to be sent through the channels
+	select {
+	case data := <-responseChannel:
+		// Successfully received the data, prepare the response
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "User details retrieved successfully"
+		payload.Data = data.Users
+
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		// If there was an error calling the gRPC method, handle it
+		log.Println("Error retrieving users:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+	}
 }
 
 //TODO

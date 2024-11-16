@@ -33,9 +33,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/verify-token", app.VerifyToken)
 	mux.Post("/api/v1/authentication/log-out", app.Logout)
 	mux.Get("/api/v1/authentication/verify-email", app.VerifyEmail)
-
 	mux.Post("/api/v1/authentication/participant-create-staff", app.ParticipantCreateStaff)
-
 	mux.Get("/api/v1/authentication/countries", app.GetCountries)
 	mux.Get("/api/v1/authentication/states", app.GetStates)
 	mux.Get("/api/v1/authentication/lgas", app.GetLgas)
@@ -54,8 +52,6 @@ func (app *Config) routes() http.Handler {
 
 	//Inventory routes---------------------------------------------------//
 	mux.Get("/api/v1/inventory/getusers", app.GetUsers)
-
-	mux.Get("/api/v1/inventory/getusers-rpc", app.GetUsersViaRPC)
 	mux.Post("/api/v1/inventory/create-inventory", app.CreateInventory)
 	mux.Get("/api/v1/inventory/getusers-grpc", app.GetUsersViaGrpc)
 

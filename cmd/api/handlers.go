@@ -1475,34 +1475,6 @@ type UserDTO struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (app *Config) GetUsersViaRPC(w http.ResponseWriter, r *http.Request) {
-	app.RetrieveUserViaRPC(w)
-}
-
-func (app *Config) RetrieveUserViaRPC(w http.ResponseWriter) {
-	client, err := rpc.Dial("tcp", "inventory-service:5001")
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	var jsonData []UserDTO
-	err = client.Call("RPCServer.RetrieveUsers", struct{}{}, &jsonData)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	payload := jsonResponse{
-		Error:      false,
-		Message:    "data retrieved successfully",
-		StatusCode: http.StatusOK,
-		Data:       jsonData,
-	}
-
-	app.writeJSON(w, http.StatusOK, payload)
-}
-
 func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 
 	err := r.ParseMultipartForm(20 << 20)
@@ -1516,11 +1488,6 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 	description := r.FormValue("description")
 	var images []*inventory.ImageData
-
-	log.Println(category_id)
-	log.Println(sub_category_id)
-	log.Println(name)
-	log.Println(description)
 
 	// Iterate over all files with the key "images"
 	files := r.MultipartForm.File["images"]
@@ -1590,39 +1557,6 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusAccepted, payload)
 
 }
-
-// func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
-// 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-// 	if err != nil {
-// 		app.errorJSON(w, err, nil)
-// 		return
-// 	}
-// 	defer conn.Close()
-
-// 	log.Println("reached the getusers")
-
-// 	c := inventory.NewInventoryServiceClient(conn)
-// 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
-// 	defer cancel()
-
-// 	// Call the GetUsers method
-// 	data, err := c.GetUsers(ctx, &inventory.EmptyRequest{})
-
-// 	log.Println(data, "the data")
-// 	if err != nil {
-// 		log.Println(err, "the error")
-// 		app.errorJSON(w, err, nil)
-// 		return
-// 	}
-
-// 	// Assuming data.Users is a slice of users, you might want to adjust this
-// 	var payload jsonResponse
-// 	payload.Error = false
-// 	payload.Message = "User details retrieved successfully"
-// 	payload.Data = data.Users // Adjust based on actual response structure
-
-// 	app.writeJSON(w, http.StatusAccepted, payload)
-// }
 
 func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
 	// get a gRPC client and dial using tcp

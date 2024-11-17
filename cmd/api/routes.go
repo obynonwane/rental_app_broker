@@ -54,6 +54,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/inventory/getusers", app.GetUsers)
 	mux.Post("/api/v1/inventory/create-inventory", app.CreateInventory)
 	mux.Get("/api/v1/inventory/getusers-grpc", app.GetUsersViaGrpc)
+	mux.Get("/api/v1/inventory/all-categories", app.AllInventories)
 
 	// Add the Prometheus metrics endpoint to the router-----------------//
 	mux.Handle("/metrics", promhttp.Handler())

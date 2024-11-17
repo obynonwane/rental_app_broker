@@ -1608,6 +1608,56 @@ func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *Config) AllInventories(w http.ResponseWriter, r *http.Request) {
+	// get a gRPC client and dial using tcp
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	// channel to receive response from go routince
+
+	responseChannel := make(chan *inventory.AllCategoryResponse)
+	errorChannel := make(chan error)
+
+	go func() {
+		data, err := c.GetCategories(ctx, &inventory.EmptyRequest{})
+		if err != nil {
+			errorChannel <- err
+			return
+		}
+
+		responseChannel <- data
+	}()
+
+	select {
+
+	case data := <-responseChannel:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Categories retrieved successfully"
+		payload.Data = data.Categories
+
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error retrieving users:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+
+	}
+}
+
 //TODO
 // 1. format role & permission into separate arrays - done
 // 2. Try adding additional permission to a user - done

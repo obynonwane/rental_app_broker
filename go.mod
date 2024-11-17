@@ -9,7 +9,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-chi/cors v1.2.1
 	github.com/go-redis/redis v6.15.9+incompatible
-	github.com/obynonwane/rental-service-proto v0.0.0-20241114092027-65d33af90d69
+	github.com/obynonwane/rental-service-proto v0.0.0-20241117101054-188397035cef
 	github.com/prometheus/client_golang v1.20.2
 	github.com/redis/go-redis/v9 v9.5.3
 	google.golang.org/grpc v1.68.0

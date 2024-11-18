@@ -1710,10 +1710,10 @@ func (app *Config) AllSubcategories(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-func (app *Config) GetCategorySubcategory(w http.ResponseWriter, r *http.Request) {
+func (app *Config) GetCategorySubcategories(w http.ResponseWriter, r *http.Request) {
 	// get a gRPC client and dial using tcp
 
-	// subcategoryId := chi.URLParam(r, "id")
+	categoryId := chi.URLParam(r, "id")
 
 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 
@@ -1733,7 +1733,7 @@ func (app *Config) GetCategorySubcategory(w http.ResponseWriter, r *http.Request
 	errorChannel := make(chan error)
 
 	go func() {
-		data, err := c.GetSubCategories(ctx, &inventory.EmptyRequest{})
+		data, err := c.GetCategorySubcategories(ctx, &inventory.ResourceId{Id: categoryId})
 		if err != nil {
 			errorChannel <- err
 			return

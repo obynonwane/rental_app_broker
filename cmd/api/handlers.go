@@ -1608,7 +1608,7 @@ func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (app *Config) AllInventories(w http.ResponseWriter, r *http.Request) {
+func (app *Config) AllCategories(w http.ResponseWriter, r *http.Request) {
 	// get a gRPC client and dial using tcp
 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
@@ -1643,6 +1643,7 @@ func (app *Config) AllInventories(w http.ResponseWriter, r *http.Request) {
 		payload.Error = false
 		payload.Message = "Categories retrieved successfully"
 		payload.Data = data.Categories
+		payload.StatusCode = int(data.StatusCode)
 
 		app.writeJSON(w, http.StatusAccepted, payload)
 
@@ -1656,6 +1657,170 @@ func (app *Config) AllInventories(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 
 	}
+}
+
+func (app *Config) AllSubcategories(w http.ResponseWriter, r *http.Request) {
+	// get a gRPC client and dial using tcp
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	// channel to receive response from go routince
+
+	responseChannel := make(chan *inventory.AllSubCategoryResponse)
+	errorChannel := make(chan error)
+
+	go func() {
+		data, err := c.GetSubCategories(ctx, &inventory.EmptyRequest{})
+		if err != nil {
+			errorChannel <- err
+			return
+		}
+
+		responseChannel <- data
+	}()
+
+	select {
+
+	case data := <-responseChannel:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Subcategories retrieved successfully"
+		payload.Data = data.Subcategories
+		payload.StatusCode = int(data.StatusCode)
+
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error retrieving subcategories:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+
+	}
+
+}
+func (app *Config) GetCategorySubcategory(w http.ResponseWriter, r *http.Request) {
+	// get a gRPC client and dial using tcp
+
+	// subcategoryId := chi.URLParam(r, "id")
+
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	// channel to receive response from go routince
+
+	responseChannel := make(chan *inventory.AllSubCategoryResponse)
+	errorChannel := make(chan error)
+
+	go func() {
+		data, err := c.GetSubCategories(ctx, &inventory.EmptyRequest{})
+		if err != nil {
+			errorChannel <- err
+			return
+		}
+
+		responseChannel <- data
+	}()
+
+	select {
+
+	case data := <-responseChannel:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Subcategories retrieved successfully"
+		payload.Data = data.Subcategories
+		payload.StatusCode = int(data.StatusCode)
+
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error retrieving subcategories:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+
+	}
+
+}
+
+func (app *Config) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
+
+	// establish connection via grpc
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close() // defer closing connection untill function execution is complete
+
+	// instantiate a new instnnce of inventory service from proto definition
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	// retrive the category ID
+	id := chi.URLParam(r, "id")
+
+	// declare response and error channel
+	responseChannel := make(chan *inventory.CategoryResponse)
+	errorChannel := make(chan error)
+
+	// declare a go routine to initiate asynchronour process
+	go func(id string) {
+		data, err := c.GetCategory(ctx, &inventory.ResourceId{Id: id})
+		if err != nil {
+			errorChannel <- err
+
+			return
+		}
+		responseChannel <- data
+
+	}(id)
+
+	select {
+	case data := <-responseChannel:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Category retrieved successfully"
+		payload.Data = data
+		payload.StatusCode = int(data.StatusCode)
+
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error retrieving category:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+
+	}
+
 }
 
 //TODO

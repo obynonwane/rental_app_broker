@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"net/http"
 	"os"
 )
@@ -12,7 +11,7 @@ import (
 type jsonResponse struct {
 	Error      bool   `json:"error"`
 	Message    string `json:"message"`
-	StatusCode int  `json:"status_code"`
+	StatusCode int    `json:"status_code"`
 	Data       any    `json:"data,omitempty"`
 }
 
@@ -116,7 +115,6 @@ func (app *Config) getToken(r *http.Request) (jsonResponse, error) {
 
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 
-	log.Println(jsonFromService, "json from service")
 	if err != nil {
 		return jsonResponse{Error: true, Message: err.Error(), StatusCode: http.StatusBadRequest, Data: nil}, err
 	}

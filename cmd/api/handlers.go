@@ -22,6 +22,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Define a custom type for the context key
+
 var ctx = context.Background()
 
 type MailPayload struct {
@@ -1477,7 +1479,44 @@ type UserDTO struct {
 
 func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 
-	err := r.ParseMultipartForm(20 << 20)
+	// verify the user token
+	response, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+		return
+	}
+
+	// Extract user ID from response.Data
+	var userID string
+	if response.Data != nil {
+		// Assert response.Data is a map
+		dataMap, ok := response.Data.(map[string]any)
+		if !ok {
+			app.errorJSON(w, errors.New("invalid data format"), nil)
+			return
+		}
+
+		// Extract "user" field and assert it is a map
+		userData, ok := dataMap["user"].(map[string]any)
+		if !ok {
+			app.errorJSON(w, errors.New("missing or invalid user data"), nil)
+			return
+		}
+
+		// Extract "id" field and assert it is a string
+		userID, ok = userData["id"].(string)
+		if !ok {
+			app.errorJSON(w, errors.New("missing or invalid user ID"), nil)
+			return
+		}
+	}
+
+	err = r.ParseMultipartForm(20 << 20)
 	if err != nil {
 		app.errorJSON(w, err, nil)
 		return
@@ -1530,9 +1569,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	c := inventory.NewInventoryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-
-	// leave cancel
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Increased timeout
 	defer cancel()
 
 	data, err := c.CreateInventory(ctx, &inventory.CreateInventoryRequest{
@@ -1541,6 +1578,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		Name:          name,
 		Description:   description,
 		Images:        images,
+		UserId:        userID,
 	})
 
 	if err != nil {

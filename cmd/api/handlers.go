@@ -13,6 +13,7 @@ import (
 	"net/rpc"
 	"os"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -1857,6 +1858,127 @@ func (app *Config) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error: gRPC request timed out")
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 
+	}
+
+}
+
+func (app *Config) ExtractLoggedInUser(w http.ResponseWriter, r *http.Request) (string, error) {
+	// verify the user token
+	response, err := app.getToken(r)
+	if err != nil {
+		return "", fmt.Errorf("%s", response.Message)
+	}
+
+	if response.Error {
+		return "", fmt.Errorf("%s", response.Message)
+	}
+
+	// Extract user ID from response.Data
+	var userID string
+	if response.Data != nil {
+		// Assert response.Data is a map
+		dataMap, ok := response.Data.(map[string]any)
+		if !ok {
+			return "", fmt.Errorf("invalid data format")
+		}
+
+		// Extract "user" field and assert it is a map
+		userData, ok := dataMap["user"].(map[string]any)
+		if !ok {
+			return "", fmt.Errorf("missing or invalid user data")
+		}
+
+		// Extract "id" field and assert it is a string
+		userID, ok = userData["id"].(string)
+		if !ok {
+			return "", fmt.Errorf("missing or invalid user ID")
+		}
+	}
+
+	return userID, nil
+}
+
+func (app *Config) RateInventory(w http.ResponseWriter, r *http.Request) {
+	// extract the request params
+	queryParams := r.URL.Query()
+	comment := queryParams.Get("comment")
+	if comment == "" {
+		app.errorJSON(w, errors.New("comment on rating not supplied"), nil)
+		return
+	}
+	inventory_id := queryParams.Get("inventory_id")
+	if inventory_id == "" {
+		app.errorJSON(w, errors.New("inventory id must be supplied"), nil)
+		return
+	}
+
+	rating := queryParams.Get("rating")
+	if rating == "" {
+		app.errorJSON(w, errors.New("inventory id must be supplied"), nil)
+		return
+	}
+
+	// convert rating into int32
+	ratingInt, err := strconv.ParseInt(rating, 10, 25)
+	if err != nil {
+		app.errorJSON(w, errors.New("error convering rrating to int"), nil)
+		return
+	}
+	ratingInt32 := int32(ratingInt)
+
+	// the user
+	userId, err := app.ExtractLoggedInUser(w, r)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// establish connection via grpc
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close() // defer closing connection untill function execution is complete
+
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	resultCh := make(chan *inventory.InventoryRatingResponse, 1)
+	errorChannel := make(chan error, 1)
+	go func(ratingInt32 int32, comment string, inventory_id string) {
+		result, err := c.RateInventory(ctx, &inventory.InventoryRatingRequest{
+			InventoryId: inventory_id,
+			Rating:      ratingInt32,
+			Comment:     comment,
+			RaterId:     userId,
+		})
+		if err != nil {
+			errorChannel <- err
+		}
+		resultCh <- result
+
+	}(ratingInt32, comment, inventory_id)
+
+	select {
+	case data := <-resultCh:
+
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Rating sucessfully submitted"
+		payload.Data = data
+		payload.StatusCode = 200
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error creating rating:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
 
 }

@@ -15,7 +15,7 @@ func Test_routes_exist(t *testing.T) {
 	// calls the routes method on testApp to obtain the application routes
 	// chi router have method walks on its type, that lets you walk through the routes to make sure they exist
 	testRoutes := testApp.routes()
-	chiRoutes := testRoutes.(chi.Router) // cast testRoutes to type chi.Router
+	chiRoutes := testRoutes.(chi.Router) // cast testRoutes to type chi.Router nice
 
 	//list of expected routes in the application - slice of strings
 	routes := []string{

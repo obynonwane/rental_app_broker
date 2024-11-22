@@ -17,15 +17,38 @@ func Test_routes_exist(t *testing.T) {
 	testRoutes := testApp.routes()
 	chiRoutes := testRoutes.(chi.Router) // cast testRoutes to type chi.Router
 
-	//list of expected routes in the application
+	//list of expected routes in the application - slice of strings
 	routes := []string{
+		"/",
 		"/api/v1/authentication/signup",
+		"/api/v1/authentication/admin/signup",
 		"/api/v1/authentication/login",
 		"/api/v1/authentication/get-me",
 		"/api/v1/authentication/verify-token",
 		"/api/v1/authentication/log-out",
 		"/api/v1/authentication/verify-email",
 		"/api/v1/authentication/participant-create-staff",
+		"/api/v1/authentication/countries",
+		"/api/v1/authentication/states",
+		"/api/v1/authentication/lgas",
+		"/api/v1/authentication/country/state/{id}",
+		"/api/v1/authentication/state/lgas/{id}",
+		"/api/v1/authentication/kyc-renter",
+		"/api/v1/authentication/kyc-business",
+		"/api/v1/authentication/retrieve-identification-types",
+		"/api/v1/authentication/list-user-type",
+		"/api/v1/authentication/test-rpc",
+		"/api/v1/send-email",
+		"/api/v1/inventory/getusers",
+		"/api/v1/inventory/create-inventory",
+		"/api/v1/inventory/getusers-grpc",
+		"/api/v1/inventory/all-categories",
+		"/api/v1/inventory/all-subcategories",
+		"/api/v1/inventory/category/subcategory/{id}",
+		"/api/v1/inventory/category/{id}",
+		"/api/v1/inventory/rating",
+		"/api/v1/inventory/rating-user",
+		"/metrics",
 	}
 
 	// loops through above list calling routesExist to verify their existance

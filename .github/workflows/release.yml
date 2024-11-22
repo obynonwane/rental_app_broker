@@ -8,12 +8,32 @@ on:
 
 jobs:
   release:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}  # Only run if ci-test passed
 
     steps:
       # Check out the repository
       - uses: actions/checkout@v4
+
+      # Set up Go environment
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21.0'
+
+      # Install dependencies (if applicable)
+      - name: Install Dependencies
+        run: |
+          go mod tidy
+          go mod vendor
+
+      # Build the broker binary using Makefile
+      - name: Build Broker Binary
+        run: make build_broker_service
+
+      # Build the Docker image
+      - name: Build Docker Image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/rental-inventory-service:1.0.0 .
 
       # Log in to Docker Hub
       - name: Log in to Docker Hub
@@ -22,12 +42,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Build the Docker image
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/rental-inventory-service:1.0.0 .
+      # Push Docker image to Docker Hub
+      - name: Push Docker Image
+        run:  docker push ${{ secrets.DOCKER_USERNAME }}/rental-inventory-service:1.0.0
 
-      # Push the Docker image
-      - name: Push Docker image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/rental-inventory-service:1.0.0

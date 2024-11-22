@@ -1942,7 +1942,7 @@ func (app *Config) RateInventory(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close() // defer closing connection untill function execution is complete
 
 	c := inventory.NewInventoryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Increased timeout
 	defer cancel()
 
 	resultCh := make(chan *inventory.InventoryRatingResponse, 1)

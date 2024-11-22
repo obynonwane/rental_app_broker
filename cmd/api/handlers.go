@@ -1983,6 +1983,90 @@ func (app *Config) RateInventory(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (app *Config) RateUser(w http.ResponseWriter, r *http.Request) {
+	// extract the request params
+	queryParams := r.URL.Query()
+	comment := queryParams.Get("comment")
+	if comment == "" {
+		app.errorJSON(w, errors.New("comment on rating not supplied"), nil)
+		return
+	}
+	user_id := queryParams.Get("user_id")
+	if user_id == "" {
+		app.errorJSON(w, errors.New("user id must be supplied"), nil)
+		return
+	}
+
+	rating := queryParams.Get("rating")
+	if rating == "" {
+		app.errorJSON(w, errors.New("inventory id must be supplied"), nil)
+		return
+	}
+
+	// convert rating into int32
+	ratingInt, err := strconv.ParseInt(rating, 10, 25)
+	if err != nil {
+		app.errorJSON(w, errors.New("error convering rrating to int"), nil)
+		return
+	}
+	ratingInt32 := int32(ratingInt)
+
+	// the user
+	raterId, err := app.ExtractLoggedInUser(w, r)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// establish connection via grpc
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close() // defer closing connection untill function execution is complete
+
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Increased timeout
+	defer cancel()
+
+	resultCh := make(chan *inventory.UserRatingResponse, 1)
+	errorChannel := make(chan error, 1)
+	go func(ratingInt32 int32, comment string, user_id string) {
+		result, err := c.RateUser(ctx, &inventory.UserRatingRequest{
+			UserId:  user_id,
+			Rating:  ratingInt32,
+			Comment: comment,
+			RaterId: raterId,
+		})
+		if err != nil {
+			errorChannel <- err
+		}
+		resultCh <- result
+
+	}(ratingInt32, comment, user_id)
+
+	select {
+	case data := <-resultCh:
+
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Rating sucessfully submitted"
+		payload.Data = data
+		payload.StatusCode = 200
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error creating rating:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+	}
+}
+
 //TODO
 // 1. format role & permission into separate arrays - done
 // 2. Try adding additional permission to a user - done

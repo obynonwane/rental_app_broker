@@ -33,7 +33,7 @@ jobs:
 
       # Build the Docker image
       - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/rental-inventory-service:1.0.0 .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/rental-broker-service:1.0.0 .
 
       # Log in to Docker Hub
       - name: Log in to Docker Hub
@@ -44,5 +44,5 @@ jobs:
 
       # Push Docker image to Docker Hub
       - name: Push Docker Image
-        run:  docker push ${{ secrets.DOCKER_USERNAME }}/rental-inventory-service:1.0.0
+        run:  docker push ${{ secrets.DOCKER_USERNAME }}/rental-broker-service:1.0.0
 

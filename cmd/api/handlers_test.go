@@ -14,13 +14,20 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
+// initialise a memory size of bufcoon in-memory listener
 const bufSize = 1024 * 1024
 
+// create a bufcoon listener of type *bucoon.Listener
 var lis *bufconn.Listener
 
 func init() {
+	// initializes the inm-memory listener
 	lis = bufconn.Listen(bufSize)
+
+	// create a new instance of gRPC server
 	server := grpc.NewServer()
+
+	// Registers a mock server implementing
 	inventory.RegisterInventoryServiceServer(server, &mockInventoryServer{})
 	go func() {
 		if err := server.Serve(lis); err != nil {
@@ -50,6 +57,7 @@ func (m *mockInventoryServer) RateUser(ctx context.Context, req *inventory.UserR
 	}, nil
 }
 
+// Uses Integration testing - Bufcoon based testing (gRPC handlers testing)
 func TestRateUserBufconn(t *testing.T) {
 	// Set up gRPC connection with Bufconn
 	grpcConn, err := grpc.DialContext(context.Background(), "", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
@@ -65,7 +73,7 @@ func TestRateUserBufconn(t *testing.T) {
 	comment := "Great"
 	rating := int32(5)
 
-	// Make the gRPC call
+	// Make the gRPC call - handles the request timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -86,6 +94,7 @@ func TestRateUserBufconn(t *testing.T) {
 	assert.Equal(t, "2024-11-24 10:00:00", resp.CreatedAtHuman)
 }
 
+// uses unit testing (mock based testing)
 func TestRateUserMockgen(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

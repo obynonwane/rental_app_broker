@@ -14,6 +14,11 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
+// Mock server implementation for the Bufconn test
+type mockInventoryServer struct {
+	inventory.UnimplementedInventoryServiceServer
+}
+
 // initialise a memory size of bufcoon in-memory listener
 const bufSize = 1024 * 1024
 
@@ -36,18 +41,15 @@ func init() {
 	}()
 }
 
+// dials the bufconn listener instead of a real network connection
 func bufDialer(ctx context.Context, address string) (net.Conn, error) {
 	return lis.Dial() // Return the connection directly
 }
 
-// Mock server implementation for the Bufconn test
-type mockInventoryServer struct {
-	inventory.UnimplementedInventoryServiceServer
-}
-
+// Uses Integration testing - Bufcoon based testing (gRPC  mocking the server side)
 func (m *mockInventoryServer) RateUser(ctx context.Context, req *inventory.UserRatingRequest) (*inventory.UserRatingResponse, error) {
 	return &inventory.UserRatingResponse{
-		Id:             "rating-123",
+		Id:             "15abc220-967b-44cb-9e95-183b63571e88",
 		UserId:         req.UserId,
 		RaterId:        req.RaterId,
 		Rating:         req.Rating,
@@ -57,7 +59,7 @@ func (m *mockInventoryServer) RateUser(ctx context.Context, req *inventory.UserR
 	}, nil
 }
 
-// Uses Integration testing - Bufcoon based testing (gRPC handlers testing)
+// Uses Integration testing - Bufcoon based testing (gRPC mocking the client)
 func TestRateUserBufconn(t *testing.T) {
 	// Set up gRPC connection with Bufconn
 	grpcConn, err := grpc.DialContext(context.Background(), "", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
@@ -68,9 +70,9 @@ func TestRateUserBufconn(t *testing.T) {
 	client := inventory.NewInventoryServiceClient(grpcConn)
 
 	// Simulate a frontend request's parameters
-	userId := "123"
-	raterId := "456"
-	comment := "Great"
+	userId := "6a7b83f0-30cb-4854-a32e-3576bf491858"
+	raterId := "7a937e9d-1dc2-4e6d-ba38-d1648b05730c"
+	comment := "greate product"
 	rating := int32(5)
 
 	// Make the gRPC call - handles the request timeout
@@ -87,14 +89,15 @@ func TestRateUserBufconn(t *testing.T) {
 	// Validate the response
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
-	assert.Equal(t, "rating-123", resp.Id)
+	assert.Equal(t, "15abc220-967b-44cb-9e95-183b63571e88", resp.Id)
 	assert.Equal(t, userId, resp.UserId)
 	assert.Equal(t, raterId, resp.RaterId)
 	assert.Equal(t, comment, resp.Comment)
 	assert.Equal(t, "2024-11-24 10:00:00", resp.CreatedAtHuman)
 }
 
-// uses unit testing (mock based testing)
+// uses unit testing (mock based testing) - using goMock
+// used generated mock proto file
 func TestRateUserMockgen(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -103,9 +106,9 @@ func TestRateUserMockgen(t *testing.T) {
 	mockClient := inventory.NewMockInventoryServiceClient(ctrl)
 
 	// Simulate a frontend request's parameters
-	userId := "123"
-	raterId := "456"
-	comment := "Great"
+	userId := "5bce1593-c6a6-4d2d-ab6a-fd2962cffb59"
+	raterId := "7a937e9d-1dc2-4e6d-ba38-d1648b05730c"
+	comment := "greate product"
 	rating := int32(5)
 
 	// Define the expected behavior of the mock client
@@ -117,7 +120,7 @@ func TestRateUserMockgen(t *testing.T) {
 			Comment: comment,
 		}).
 		Return(&inventory.UserRatingResponse{
-			Id:             "rating-123",
+			Id:             "6a7b83f0-30cb-4854-a32e-3576bf491858",
 			UserId:         userId,
 			RaterId:        raterId,
 			Rating:         rating,
@@ -130,6 +133,7 @@ func TestRateUserMockgen(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	// make call to the grpc server method
 	resp, err := mockClient.RateUser(ctx, &inventory.UserRatingRequest{
 		UserId:  userId,
 		RaterId: raterId,
@@ -140,7 +144,7 @@ func TestRateUserMockgen(t *testing.T) {
 	// Validate the response
 	assert.NoError(t, err)
 	assert.NotNil(t, resp)
-	assert.Equal(t, "rating-123", resp.Id)
+	assert.Equal(t, "6a7b83f0-30cb-4854-a32e-3576bf491858", resp.Id)
 	assert.Equal(t, userId, resp.UserId)
 	assert.Equal(t, raterId, resp.RaterId)
 	assert.Equal(t, comment, resp.Comment)

@@ -15,6 +15,11 @@ type Config struct {
 	cache *redis.Client
 }
 
+// Ensure Config implements the Handler interface (all methods in interface)
+// this is a compile time check, just for safety
+// the _ is to tell go compiler i wont be needing to use the Handler variable
+var _ Handler = &Config{}
+
 func main() {
 	cache, err := redis_client.NewRedisClient()
 	if err != nil {

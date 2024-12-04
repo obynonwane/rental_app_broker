@@ -103,6 +103,8 @@ func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 
 	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "signup")
 
+	log.Println(authServiceUrl, "THE URL")
+
 	// call the service by creating a request
 	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
 

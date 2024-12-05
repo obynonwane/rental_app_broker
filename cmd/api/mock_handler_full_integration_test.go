@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -24,9 +25,9 @@ func TestRateUserIntegration(t *testing.T) {
 	// Create a gRPC client
 	client := inventory.NewInventoryServiceClient(conn)
 
-	// Prepare test data
-	testUserID := "test-user-id"
-	testRaterID := "test-rater-id"
+	// Prepare test data (testUserID, testRaterID needs to be supplied manually from users table )
+	testUserID := "c17558dd-07eb-4e4f-b9dc-ffdb39b95f0b"
+	testRaterID := "c17558dd-07eb-4e4f-b9dc-ffdb39b95f0b"
 	testComment := "Excellent service!"
 	testRating := int32(5)
 
@@ -59,10 +60,10 @@ func TestRateUserIntegration(t *testing.T) {
 func TestSignupIntegration(t *testing.T) {
 	// Request payload
 	requestPayload := &SignupPayload{
-		FirstName: "obinna",
-		LastName:  "johnson",
-		Email:     "obinna@gmail.com",
-		Phone:     "+2348167365693",
+		FirstName: "samson",
+		LastName:  "jehoya",
+		Email:     "yunhghghd@gmail.com",
+		Phone:     "+23481673988464",
 		Password:  "password",
 	}
 
@@ -73,14 +74,11 @@ func TestSignupIntegration(t *testing.T) {
 	}
 
 	// Construct URL
-	// authURL := os.Getenv("AUTH_URL")
-	authURL := `http://authentication-service/api/v1/authentication/signup`
-	// if authURL == "" {
-	// 	t.Fatalf("AUTH_URL is not set or empty")
-	// }
-	// authServiceUrl := fmt.Sprintf("%s%s", authURL, "signup")
-
-	// log.Printf("Request URL: %s", authServiceUrl)
+	authURL := os.Getenv("AUTH_PATH")
+	if authURL == "" {
+		// t.Fatalf("AUTH_URL is not set or empty")
+		authURL = "http://localhost:5001/api/v1/authentication/signup"
+	}
 
 	// Create HTTP request
 	request, err := http.NewRequest("POST", authURL, bytes.NewBuffer(jsonData))

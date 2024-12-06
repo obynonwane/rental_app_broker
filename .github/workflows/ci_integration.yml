@@ -2,7 +2,8 @@ name: ci-integration-tests
 
 on:
   workflow_run:
-    workflows: ["Build and Test"] # Trigger after the "Build and Test" workflow
+    workflows: 
+      - "ci-unit-tests"       # Trigger after the "ci-unit-tests" workflow
     types:
       - completed
 

@@ -134,7 +134,6 @@ func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("response from auth service", jsonFromService)
 	if response.StatusCode != http.StatusAccepted {
 		log.Println(jsonFromService.Message, jsonFromService)
 		app.errorJSON(w, errors.New(jsonFromService.Message), nil)

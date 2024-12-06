@@ -9,10 +9,10 @@ import (
 )
 
 type jsonResponse struct {
-	Error      bool   `json:"error"`
-	Message    string `json:"message"`
-	StatusCode int    `json:"status_code"`
-	Data       any    `json:"data,omitempty"`
+	Error      bool        `json:"error"`
+	Message    string      `json:"message"`
+	StatusCode int         `json:"status_code"`
+	Data       interface{} `json:"data,omitempty"`
 }
 
 // read json

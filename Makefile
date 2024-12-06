@@ -13,15 +13,16 @@ build_broker_service: ## Build the broker service binary
 
 # Unit test: Run only unit tests
 unit-test: ## Run only unit tests
-	cd cmd/api && go test -v -cover -short ./...
+	cd cmd/api && go test -v -tags='!integration' -count=1 ./...
 
 # Integration test: Run only integration tests
 integration-test: ## Run only integration tests
-	cd cmd/api && go test -v -tags=integration ./...
+	cd cmd/api && go test -v -tags='integration' -count=1 ./...
 
 # Full test: Run all tests (unit + integration)
 test: ## Run all tests (unit + integration)
-	cd cmd/api && go test -v -cover ./...
+	cd cmd/api && go test -v -cover -count=1 ./...
+	
 	
 
 # test-cache-clear: run test while clearing cache to see if any is failling
@@ -45,3 +46,6 @@ read-coverage-html: ## read the generated coverage file in human readeable forma
 help: ## Show this help
 	@echo "Available commands:"
 	@awk 'BEGIN {FS = ":.*##"; printf "\n"} /^[a-zA-Z0-9_-]+:.*##/ { printf "  %-30s %s\n", $$1, $$2 } /^##@/ { printf "\n%s\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+
+# cd cmd/api && go test -v -run TestSignupHandler -cover ./... 

@@ -103,8 +103,6 @@ func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 
 	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "signup")
 
-	log.Println(authServiceUrl, "THE URL")
-
 	// call the service by creating a request
 	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
 
@@ -136,7 +134,6 @@ func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("response from auth service", jsonFromService)
 	if response.StatusCode != http.StatusAccepted {
 		log.Println(jsonFromService.Message, jsonFromService)
 		app.errorJSON(w, errors.New(jsonFromService.Message), nil)

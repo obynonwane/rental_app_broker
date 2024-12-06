@@ -2,28 +2,38 @@ name: Release to Docker Hub
 
 on:
   workflow_run:
-    workflows: ["ci-test"]
+    workflows: 
+      - "ci-unit-tests"       # Unit test workflow
+      - "ci-integration-tests" # Integration test workflow
     types:
       - completed
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    # Ensure both workflows completed successfully before proceeding
+    if: >
+      ${{ github.event.workflow_run.conclusion == 'success' && 
+           github.event.workflow_run.workflow == 'ci-unit-tests' || 
+           github.event.workflow_run.workflow == 'ci-integration-tests' }}
 
     steps:
+      # Check out the repository
       - uses: actions/checkout@v4
 
+      # Set up Go environment
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.21.0'
 
+      # Install dependencies
       - name: Install Dependencies
         run: |
           go mod tidy
           go mod vendor
 
+      # Debugging step to inspect environment
       - name: Debug Log
         run: |
           echo "Current directory:"
@@ -33,17 +43,21 @@ jobs:
           echo "Environment variables:"
           env
 
+      # Build broker binary using Makefile
       - name: Build Broker Binary
         run: make build_broker_service
 
+      # Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      # Build Docker image
       - name: Build Docker Image
         run: docker build -t ${{ secrets.DOCKER_USERNAME }}/rental-broker-service:1.0.0 .
 
+      # Push Docker image to Docker Hub
       - name: Push Docker Image
         run: docker push ${{ secrets.DOCKER_USERNAME }}/rental-broker-service:1.0.0

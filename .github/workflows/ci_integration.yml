@@ -1,0 +1,49 @@
+name: ci-integration-tests
+
+on:
+  workflow_run:
+    workflows: ["Build and Test"] # Trigger after the "Build and Test" workflow
+    types:
+      - completed
+
+jobs:
+  integration-test:
+    runs-on: ubuntu-latest
+
+    services:
+      # Start the authentication service for testing
+      auth_service:
+        image: biostech/rental-authentication-service:1.0.0
+        options: >-
+          --env DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          --env DATABASE_TYPE=${{ secrets.DATABASE_TYPE }}
+          --env DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+          --env DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+          --env DATABASE_USER=${{ secrets.DATABASE_USER }}
+          --env DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          --env DATABASE_SSLMODE=${{ secrets.DATABASE_SSLMODE }}
+          --env DATABASE_TIMEZONE=${{ secrets.DATABASE_TIMEZONE }}
+          --env DATABASE_CONNECT_TIMEOUT=${{ secrets.DATABASE_CONNECT_TIMEOUT }}
+
+    steps:
+    - uses: actions/checkout@v4 # Checkout code
+
+    - name: Set up Go
+      uses: actions/setup-go@v4 # Set up Go environment
+      with:
+        go-version: '1.21.0'
+
+    - name: Wait for Auth Service
+      run: |
+        # Ensure auth service is ready
+        echo "Waiting for authentication service to be ready..."
+        until curl -s http://authentication-service/healthz; do
+          echo "Auth service not ready. Retrying in 5 seconds..."
+          sleep 5
+        done
+        echo "Auth service is ready!"
+
+    - name: Run Integration Tests
+      env:
+        AUTH_URL: "http://authentication-service/api/v1/authentication/"
+      run: make integration-test # Run integration tests

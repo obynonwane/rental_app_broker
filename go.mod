@@ -10,11 +10,12 @@ require (
 	github.com/go-chi/cors v1.2.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang/mock v1.6.0
+	github.com/google/uuid v1.6.0
 	github.com/obynonwane/rental-service-proto v0.0.0-20241124092024-a3c976c847d0
 	github.com/prometheus/client_golang v1.20.2
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/stretchr/testify v1.9.0
-	go.uber.org/mock v0.5.0
+	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d
 	google.golang.org/grpc v1.68.0
 )
 

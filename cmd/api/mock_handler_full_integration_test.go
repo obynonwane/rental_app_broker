@@ -1,17 +1,24 @@
+//go:build integration
+// +build integration
+
 package main
 
 import (
 	"bytes"
 	"context"
+	"time"
+
+	// "context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/obynonwane/rental-service-proto/inventory"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/exp/rand"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -26,8 +33,9 @@ func TestRateUserIntegration(t *testing.T) {
 	client := inventory.NewInventoryServiceClient(conn)
 
 	// Prepare test data (testUserID, testRaterID needs to be supplied manually from users table )
-	testUserID := "c17558dd-07eb-4e4f-b9dc-ffdb39b95f0b"
-	testRaterID := "c17558dd-07eb-4e4f-b9dc-ffdb39b95f0b"
+
+	testUserID := "90fd9f7d-e055-4351-aa14-803441103831"
+	testRaterID := "90fd9f7d-e055-4351-aa14-803441103831"
 	testComment := "Excellent service!"
 	testRating := int32(5)
 
@@ -59,13 +67,7 @@ func TestRateUserIntegration(t *testing.T) {
 
 func TestSignupIntegration(t *testing.T) {
 	// Request payload
-	requestPayload := &SignupPayload{
-		FirstName: "samson",
-		LastName:  "jehoya",
-		Email:     "yunhghghd@gmail.com",
-		Phone:     "+23481673988464",
-		Password:  "password",
-	}
+	requestPayload := generateSignupPayload()
 
 	// Serialize payload to JSON
 	jsonData, err := json.MarshalIndent(requestPayload, "", "\t")
@@ -74,14 +76,10 @@ func TestSignupIntegration(t *testing.T) {
 	}
 
 	// Construct URL
-	authURL := os.Getenv("AUTH_PATH")
-	if authURL == "" {
-		// t.Fatalf("AUTH_URL is not set or empty")
-		authURL = "http://localhost:5001/api/v1/authentication/signup"
-	}
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "signup")
 
 	// Create HTTP request
-	request, err := http.NewRequest("POST", authURL, bytes.NewBuffer(jsonData))
+	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
 		t.Fatalf("Failed to create HTTP request: %v", err)
 	}
@@ -102,9 +100,37 @@ func TestSignupIntegration(t *testing.T) {
 		t.Fatalf("Failed to decode JSON response: %v", err)
 	}
 
-	log.Printf("Response from auth service: %+v", jsonFromService)
-
 	if response.StatusCode != http.StatusAccepted {
 		t.Fatalf("Unexpected response status: %d, message: %s", response.StatusCode, jsonFromService.Message)
+	}
+
+	assert.Equal(t, http.StatusAccepted, jsonFromService.StatusCode, "returned statuscode not equal to 202")
+}
+
+// Utility function to generate random SignupPayload
+func generateSignupPayload() *SignupPayload {
+	rand.Seed(uint64(time.Now().UnixNano())) // Convert to uint64
+
+	// Generate a random email using uuid
+	randomUUID := uuid.New().String()
+	email := fmt.Sprintf("%s@gmail.com", randomUUID[:8])
+
+	// Generate a random phone number (example format)
+	phone := fmt.Sprintf("+234816%d", rand.Intn(100000000))
+
+	// Generate random first and last names (example)
+	firstName := fmt.Sprintf("User%d", rand.Intn(1000))
+	lastName := fmt.Sprintf("Name%d", rand.Intn(1000))
+
+	// Use a fixed password or randomize it
+	password := "password" // You can generate a random password here if needed
+
+	// Return a new SignupPayload
+	return &SignupPayload{
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		Phone:     phone,
+		Password:  password,
 	}
 }

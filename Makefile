@@ -13,11 +13,11 @@ build_broker_service: ## Build the broker service binary
 
 # Unit test: Run only unit tests
 unit-test: ## Run only unit tests
-	cd cmd/api && go test -v -cover -short ./...
+	cd cmd/api && go test -v -tags='!integration' -count=1 ./...
 
 # Integration test: Run only integration tests
 integration-test: ## Run only integration tests
-	cd cmd/api && go test -v -tags=integration ./...
+	cd cmd/api && go test -v -tags='integration' -count=1 ./...
 
 # Full test: Run all tests (unit + integration)
 test: ## Run all tests (unit + integration)

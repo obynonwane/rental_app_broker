@@ -13,7 +13,7 @@ jobs:
 
     services:
       # Start the authentication service for testing
-      auth_service:
+      authentication_service:
         image: biostech/rental-authentication-service:1.0.0
         env:  # Use `env` to pass secrets as environment variables
           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}

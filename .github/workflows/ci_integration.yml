@@ -16,6 +16,7 @@ jobs:
       authentication_service:
         image: biostech/rental-authentication-service:1.0.0
         env:  # Use `env` to pass secrets as environment variables
+          DEV_ENV: ${{ secrets.DEV_ENV }}
           DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
           DATABASE_TYPE: ${{ secrets.DATABASE_TYPE }}
           DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
@@ -25,6 +26,27 @@ jobs:
           DATABASE_SSLMODE: ${{ secrets.DATABASE_SSLMODE }}
           DATABASE_TIMEZONE: ${{ secrets.DATABASE_TIMEZONE }}
           DATABASE_CONNECT_TIMEOUT: ${{ secrets.DATABASE_CONNECT_TIMEOUT }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION_TIME: ${{ secrets.JWT_EXPIRATION_TIME }}
+          JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: ${{ secrets.JWT_VERIFICATION_TOKEN_EXPIRATION_TIME }}
+          MAIL_DOMAIN: ${{ secrets.MAIL_DOMAIN }}
+          MAIL_HOST: ${{ secrets.MAIL_HOST }}
+          MAIL_PORT: ${{ secrets.MAIL_PORT }}
+          MAIL_ENCRYPTION: ${{ secrets.MAIL_ENCRYPTION }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          FROM_NAME: ${{ secrets.FROM_NAME }}
+          FROM_ADDRESS: ${{ secrets.FROM_ADDRESS }}
+          RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          RABBITMQ_HOST: ${{ secrets.RABBITMQ_HOST }}
+          RABBITMQ_URL: ${{ secrets.RABBITMQ_URL }}
+          RABBITMQ_DEFAULT_USER: ${{ secrets.RABBITMQ_DEFAULT_USER }}
+          RABBITMQ_DEFAULT_PASS: ${{ secrets.RABBITMQ_DEFAULT_PASS }}
+          ROOT_URL: ${{ secrets.ROOT_URL }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
           
     steps:
       - uses: actions/checkout@v4  # Checkout code
@@ -46,5 +68,7 @@ jobs:
 
       - name: Run Integration Tests
         env:
-          AUTH_URL: "http://authentication-service/api/v1/authentication/"
+          AUTH_URL: ${{ secrets.AUTH_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          MAIL_URL: ${{ secrets.MAIL_URL }}
         run: make integration-test  # Run integration tests

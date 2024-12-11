@@ -108,6 +108,7 @@ func TestSignupHandler(t *testing.T) {
 	if rr.Body.String() != expected {
 		t.Fatalf("Expected response body %v, got %v", expected, rr.Body.String())
 	}
+
 }
 
 func TestLoginHandler(t *testing.T) {

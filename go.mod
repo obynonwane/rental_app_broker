@@ -11,7 +11,7 @@ require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
-	github.com/obynonwane/rental-service-proto v0.0.0-20241124092024-a3c976c847d0
+	github.com/obynonwane/rental-service-proto v0.0.0-20241211102411-3623a059b760
 	github.com/prometheus/client_golang v1.20.2
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/stretchr/testify v1.9.0

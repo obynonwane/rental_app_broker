@@ -2167,7 +2167,7 @@ func (app *Config) GetUserRatings(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// convert string to int
-		int64Limit, err := strconv.ParseInt(page, 10, 32)
+		int64Limit, err := strconv.ParseInt(limit, 10, 32)
 		if err != nil {
 			fmt.Println("Error converting string to int32:", err)
 			return
@@ -2205,6 +2205,89 @@ func (app *Config) GetUserRatings(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
 
+}
+
+func (app *Config) GetInventoryRatings(w http.ResponseWriter, r *http.Request) {
+	// 1. retrieve user id
+	id := chi.URLParam(r, "id")
+
+	// 2. retrieve query param
+	queryParams := r.URL.Query()
+	page := queryParams.Get("page")
+	if page == "" {
+		app.errorJSON(w, errors.New("page not supplied"), nil)
+		return
+	}
+	limit := queryParams.Get("limit")
+	if limit == "" {
+		app.errorJSON(w, errors.New("limit not supplied"), nil)
+		return
+	}
+
+	//3.  establish connection via grpc
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	//4. instantiate a new instnnce of inventory service from proto definition
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	//5. create result & error channel
+	resultCh := make(chan *inventory.InventoryRatingsResponse, 1)
+	errorChannel := make(chan error, 1)
+
+	go func(id string, limit string, page string) {
+
+		// convert string to int
+		int64Page, err := strconv.ParseInt(page, 10, 32)
+		if err != nil {
+			fmt.Println("Error converting string to int32:", err)
+			return
+		}
+
+		// convert string to int
+		int64Limit, err := strconv.ParseInt(limit, 10, 32)
+		if err != nil {
+			fmt.Println("Error converting string to int32:", err)
+			return
+		}
+
+		// make the call via grpc
+		result, err := c.GetInventoryRatings(ctx, &inventory.GetResourceWithIDAndPagination{
+			Id:         &inventory.ResourceId{Id: id},
+			Pagination: &inventory.PaginationParam{Page: int32(int64Page), Limit: int32(int64Limit)},
+		})
+		if err != nil {
+			errorChannel <- err
+		}
+		resultCh <- result
+
+	}(id, limit, page)
+
+	// 6. select statement to wait
+	select {
+	case data := <-resultCh:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Inventory ratings sucessfully retrieved"
+		payload.Data = data
+		payload.StatusCode = 200
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error retrieving inventory:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+	}
 }
 
 //TODO

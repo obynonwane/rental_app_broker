@@ -2384,6 +2384,7 @@ func (app *Config) ReplyInventoryRating(w http.ResponseWriter, r *http.Request) 
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
 }
+
 func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
 
 	response, err := app.getToken(r)
@@ -2471,7 +2472,6 @@ func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
 }
-
 func (app *Config) returnLoggedInUserID(response jsonResponse) (string, error) {
 
 	// Extract user ID from response.Data

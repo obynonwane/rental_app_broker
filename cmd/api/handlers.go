@@ -81,8 +81,8 @@ type RPCPayload struct {
 }
 
 type ReplyRatingPayload struct {
-	RatingID      string `json:"rating_id"`
-	ReplierID     string `json:"replier_id"`
+	RatingID      string `json:"rating_id,omitempty"`
+	ReplierID     string `json:"replier_id,omitempty"`
 	Comment       string `json:"comment"`
 	ParentReplyID string `json:"parent_reply_id"`
 }
@@ -2298,11 +2298,29 @@ func (app *Config) GetInventoryRatings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) ReplyInventoryRating(w http.ResponseWriter, r *http.Request) {
+
+	response, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+		return
+	}
+
+	replierID, err := app.returnLoggedInUserID(response)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
 	//1. variable of type ReplyRatingPayload
 	var requestPayload ReplyRatingPayload
 
 	//2. extract the requestbody
-	err := app.readJSON(w, r, &requestPayload)
+	err = app.readJSON(w, r, &requestPayload)
 	if err != nil {
 		app.errorJSON(w, err, nil)
 		return
@@ -2334,7 +2352,7 @@ func (app *Config) ReplyInventoryRating(w http.ResponseWriter, r *http.Request) 
 	go func(rating_id, replier_id, comment, parent_reply_id string) {
 		// make the call via grpc
 		result, err := c.ReplyInventoryRating(ctx, &inventory.ReplyToRatingRequest{
-			RatingId:      parent_reply_id,
+			RatingId:      rating_id,
 			ReplierId:     replier_id,
 			Comment:       comment,
 			ParentReplyId: parent_reply_id,
@@ -2344,7 +2362,7 @@ func (app *Config) ReplyInventoryRating(w http.ResponseWriter, r *http.Request) 
 		}
 		resultCh <- result
 
-	}(requestPayload.RatingID, requestPayload.ReplierID, requestPayload.Comment, requestPayload.ParentReplyID)
+	}(requestPayload.RatingID, replierID, requestPayload.Comment, requestPayload.ParentReplyID)
 
 	// 7. select statement to wait
 	select {
@@ -2367,11 +2385,29 @@ func (app *Config) ReplyInventoryRating(w http.ResponseWriter, r *http.Request) 
 	}
 }
 func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
+
+	response, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+		return
+	}
+
+	replierID, err := app.returnLoggedInUserID(response)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
 	//1. variable of type ReplyRatingPayload
 	var requestPayload ReplyRatingPayload
 
 	//2. extract the requestbody
-	err := app.readJSON(w, r, &requestPayload)
+	err = app.readJSON(w, r, &requestPayload)
 	if err != nil {
 		app.errorJSON(w, err, nil)
 		return
@@ -2403,7 +2439,7 @@ func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
 	go func(rating_id, replier_id, comment, parent_reply_id string) {
 		// make the call via grpc
 		result, err := c.ReplyUserRating(ctx, &inventory.ReplyToRatingRequest{
-			RatingId:      parent_reply_id,
+			RatingId:      rating_id,
 			ReplierId:     replier_id,
 			Comment:       comment,
 			ParentReplyId: parent_reply_id,
@@ -2413,7 +2449,7 @@ func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
 		}
 		resultCh <- result
 
-	}(requestPayload.RatingID, requestPayload.ReplierID, requestPayload.Comment, requestPayload.ParentReplyID)
+	}(requestPayload.RatingID, replierID, requestPayload.Comment, requestPayload.ParentReplyID)
 
 	// 7. select statement to wait
 	select {
@@ -2434,6 +2470,33 @@ func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error: gRPC request timed out")
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
+}
+
+func (app *Config) returnLoggedInUserID(response jsonResponse) (string, error) {
+
+	// Extract user ID from response.Data
+	var userID string
+	if response.Data != nil {
+		// Assert response.Data is a map
+		dataMap, ok := response.Data.(map[string]any)
+		if !ok {
+			return "", errors.New("invalid data format")
+		}
+
+		// Extract "user" field and assert it is a map
+		userData, ok := dataMap["user"].(map[string]any)
+		if !ok {
+			return "", errors.New("missing or invalid user data")
+		}
+
+		// Extract "id" field and assert it is a string
+		userID, ok = userData["id"].(string)
+		if !ok {
+			return "", errors.New("missing or invalid user ID")
+		}
+	}
+
+	return userID, nil
 }
 
 //TODO

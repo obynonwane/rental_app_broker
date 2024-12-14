@@ -97,15 +97,14 @@ func (app *Config) ValidateReplyRatingInput(req ReplyRatingPayload) map[string]s
 	if len(req.RatingID) < minFirstNameLen {
 		errors["rating_id"] = fmt.Sprintf("rating id length should be at least %d characters", minIDLen)
 	}
-
-	if len(req.ReplierID) < minLastNameLen {
-		errors["replier_id"] = fmt.Sprintf("last name length should be at least %d characters", minIDLen)
-	}
 	if len(req.Comment) < minLastNameLen {
 		errors["comment"] = fmt.Sprintf("comment length should be at least %d characters", minCommentLen)
 	}
-	if len(req.ParentReplyID) < minLastNameLen {
-		errors["parent_reply_id"] = fmt.Sprintf("parent reply id length should be at least %d characters", minIDLen)
+
+	if req.ParentReplyID != "" {
+		if len(req.ParentReplyID) < minLastNameLen {
+			errors["parent_reply_id"] = fmt.Sprintf("parent reply id length should be at least %d characters", minIDLen)
+		}
 	}
 
 	return errors

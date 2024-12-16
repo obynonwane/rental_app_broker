@@ -2241,7 +2241,7 @@ func (app *Config) GetInventoryRatings(w http.ResponseWriter, r *http.Request) {
 
 	//4. instantiate a new instnnce of inventory service from proto definition
 	c := inventory.NewInventoryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Increased timeout
 	defer cancel()
 
 	//5. create result & error channel

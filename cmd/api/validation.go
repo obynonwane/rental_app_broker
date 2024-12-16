@@ -12,6 +12,8 @@ const (
 	minLastNameLen  = 2
 	minPhoneLen     = 10
 	iniqueIDLen     = 36
+	minIDLen        = 36
+	minCommentLen   = 5
 )
 
 func (app *Config) ValidateLoginInput(req LoginPayload) map[string]string {
@@ -87,4 +89,23 @@ func (app *Config) ValidateCreateStaffInput(req CreateStaffPayload) map[string]s
 func isEmailValid(e string) bool {
 	emailRegex := regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 	return emailRegex.MatchString(e)
+}
+
+func (app *Config) ValidateReplyRatingInput(req ReplyRatingPayload) map[string]string {
+
+	errors := map[string]string{}
+	if len(req.RatingID) < minFirstNameLen {
+		errors["rating_id"] = fmt.Sprintf("rating id length should be at least %d characters", minIDLen)
+	}
+	if len(req.Comment) < minLastNameLen {
+		errors["comment"] = fmt.Sprintf("comment length should be at least %d characters", minCommentLen)
+	}
+
+	if req.ParentReplyID != "" {
+		if len(req.ParentReplyID) < minLastNameLen {
+			errors["parent_reply_id"] = fmt.Sprintf("parent reply id length should be at least %d characters", minIDLen)
+		}
+	}
+
+	return errors
 }

@@ -80,6 +80,13 @@ type RPCPayload struct {
 	Data string
 }
 
+type ReplyRatingPayload struct {
+	RatingID      string `json:"rating_id,omitempty"`
+	ReplierID     string `json:"replier_id,omitempty"`
+	Comment       string `json:"comment"`
+	ParentReplyID string `json:"parent_reply_id"`
+}
+
 func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 
 	//extract the request body
@@ -2234,7 +2241,7 @@ func (app *Config) GetInventoryRatings(w http.ResponseWriter, r *http.Request) {
 
 	//4. instantiate a new instnnce of inventory service from proto definition
 	c := inventory.NewInventoryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) // Increased timeout
 	defer cancel()
 
 	//5. create result & error channel
@@ -2288,6 +2295,208 @@ func (app *Config) GetInventoryRatings(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error: gRPC request timed out")
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
+}
+
+func (app *Config) ReplyInventoryRating(w http.ResponseWriter, r *http.Request) {
+
+	response, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+		return
+	}
+
+	replierID, err := app.returnLoggedInUserID(response)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	//1. variable of type ReplyRatingPayload
+	var requestPayload ReplyRatingPayload
+
+	//2. extract the requestbody
+	err = app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// 3. Validate the request payload
+	if err := app.ValidateReplyRatingInput(requestPayload); len(err) > 0 {
+		app.errorJSON(w, errors.New("error trying to reply rating"), err, http.StatusBadRequest)
+		return
+	}
+
+	//4.  establish connection via grpc
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	//5. instantiate a new instnnce of inventory service from proto definition
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	//6. create result & error channel
+	resultCh := make(chan *inventory.ReplyToRatingResponse, 1)
+	errorChannel := make(chan error, 1)
+
+	go func(rating_id, replier_id, comment, parent_reply_id string) {
+		// make the call via grpc
+		result, err := c.ReplyInventoryRating(ctx, &inventory.ReplyToRatingRequest{
+			RatingId:      rating_id,
+			ReplierId:     replier_id,
+			Comment:       comment,
+			ParentReplyId: parent_reply_id,
+		})
+		if err != nil {
+			errorChannel <- err
+		}
+		resultCh <- result
+
+	}(requestPayload.RatingID, replierID, requestPayload.Comment, requestPayload.ParentReplyID)
+
+	// 7. select statement to wait
+	select {
+	case data := <-resultCh:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "Inventory rating replied sucessfully"
+		payload.Data = data
+		payload.StatusCode = 200
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error replying rating:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+	}
+}
+
+func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
+
+	response, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+		return
+	}
+
+	replierID, err := app.returnLoggedInUserID(response)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	//1. variable of type ReplyRatingPayload
+	var requestPayload ReplyRatingPayload
+
+	//2. extract the requestbody
+	err = app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// 3. Validate the request payload
+	if err := app.ValidateReplyRatingInput(requestPayload); len(err) > 0 {
+		app.errorJSON(w, errors.New("error trying to reply rating"), err, http.StatusBadRequest)
+		return
+	}
+
+	//4.  establish connection via grpc
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	//5. instantiate a new instnnce of inventory service from proto definition
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	//6. create result & error channel
+	resultCh := make(chan *inventory.ReplyToRatingResponse, 1)
+	errorChannel := make(chan error, 1)
+
+	go func(rating_id, replier_id, comment, parent_reply_id string) {
+		// make the call via grpc
+		result, err := c.ReplyUserRating(ctx, &inventory.ReplyToRatingRequest{
+			RatingId:      rating_id,
+			ReplierId:     replier_id,
+			Comment:       comment,
+			ParentReplyId: parent_reply_id,
+		})
+		if err != nil {
+			errorChannel <- err
+		}
+		resultCh <- result
+
+	}(requestPayload.RatingID, replierID, requestPayload.Comment, requestPayload.ParentReplyID)
+
+	// 7. select statement to wait
+	select {
+	case data := <-resultCh:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "User rating replied sucessfully"
+		payload.Data = data
+		payload.StatusCode = 200
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error replying rating:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+	}
+}
+func (app *Config) returnLoggedInUserID(response jsonResponse) (string, error) {
+
+	// Extract user ID from response.Data
+	var userID string
+	if response.Data != nil {
+		// Assert response.Data is a map
+		dataMap, ok := response.Data.(map[string]any)
+		if !ok {
+			return "", errors.New("invalid data format")
+		}
+
+		// Extract "user" field and assert it is a map
+		userData, ok := dataMap["user"].(map[string]any)
+		if !ok {
+			return "", errors.New("missing or invalid user data")
+		}
+
+		// Extract "id" field and assert it is a string
+		userID, ok = userData["id"].(string)
+		if !ok {
+			return "", errors.New("missing or invalid user ID")
+		}
+	}
+
+	return userID, nil
 }
 
 //TODO

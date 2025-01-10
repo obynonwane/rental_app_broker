@@ -1,5 +1,5 @@
 
-# # base go image - for production 
+# # base go image - for production
 # FROM --platform=linux/amd64 alpine:latest
 
 # RUN mkdir /app
@@ -27,7 +27,3 @@ RUN go mod download
 
 # Default command to run the binary
 CMD ["/app/brokerApp"]
-
-
-
-

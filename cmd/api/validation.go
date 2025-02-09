@@ -14,6 +14,7 @@ const (
 	iniqueIDLen     = 36
 	minIDLen        = 36
 	minCommentLen   = 5
+	tokenMinLen     = 30
 )
 
 func (app *Config) ValidateLoginInput(req LoginPayload) map[string]string {
@@ -118,6 +119,29 @@ func (app *Config) ValidateResetPasswordEmailInput(req ResetPasswordEmailPayload
 
 	if !isEmailValid(req.Email) {
 		errors["email"] = fmt.Sprintf("%s supplied is invalid", "email")
+	}
+
+	return errors
+}
+
+func (app *Config) ValidateChangePasswordInput(req ChangePasswordPayload) map[string]string {
+
+	errors := map[string]string{}
+
+	if len(req.Token) < tokenMinLen {
+		errors["token"] = fmt.Sprintf("token length should be at least %d characters", tokenMinLen)
+	}
+
+	if len(req.Password) < minPassword {
+		errors["password"] = fmt.Sprintf("password length should be at least %d characters", minPassword)
+	}
+
+	if len(req.ConfirmPassword) < minPassword {
+		errors["confirm_password"] = fmt.Sprintf("confirm password length should be at least %d characters", minPassword)
+	}
+
+	if req.Password != req.ConfirmPassword {
+		errors["confirm_password"] = fmt.Sprintf("confirm password not equal to password supplied")
 	}
 
 	return errors

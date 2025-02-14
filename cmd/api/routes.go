@@ -43,6 +43,8 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/authentication/kyc-business", app.KycBusiness)
 	mux.Get("/api/v1/authentication/retrieve-identification-types", app.RetriveIdentificationTypes)
 	mux.Get("/api/v1/authentication/list-user-type", app.ListUserTypes)
+	mux.Post("/api/v1/authentication/reset-password-email", app.SendResetPasswordEmail)
+	mux.Post("/api/v1/authentication/change-password", app.ChangePassword)
 
 	mux.Get("/api/v1/authentication/test-rpc", app.testRPC)
 

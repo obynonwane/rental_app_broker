@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"regexp"
 )
 
@@ -120,6 +121,8 @@ func (app *Config) ValidateResetPasswordEmailInput(req ResetPasswordEmailPayload
 	if !isEmailValid(req.Email) {
 		errors["email"] = fmt.Sprintf("%s supplied is invalid", "email")
 	}
+
+	log.Printf("%v", errors)
 
 	return errors
 }

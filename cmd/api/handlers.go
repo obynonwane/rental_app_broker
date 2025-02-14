@@ -1543,6 +1543,9 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	sub_category_id := r.FormValue("sub_category_id")
 	name := r.FormValue("name")
 	description := r.FormValue("description")
+	country_id := r.FormValue("country_id")
+	state_id := r.FormValue("state_id")
+	lga_id := r.FormValue("lga_id")
 	var images []*inventory.ImageData
 
 	// Iterate over all files with the key "images"
@@ -1592,6 +1595,9 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	data, err := c.CreateInventory(ctx, &inventory.CreateInventoryRequest{
 		CategoryId:    category_id,
 		SubCategoryId: sub_category_id,
+		CountryId:     country_id,
+		StateId:       state_id,
+		LgaId:         lga_id,
 		Name:          name,
 		Description:   description,
 		Images:        images,

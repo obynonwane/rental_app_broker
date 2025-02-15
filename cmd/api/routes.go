@@ -45,6 +45,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/authentication/list-user-type", app.ListUserTypes)
 	mux.Post("/api/v1/authentication/reset-password-email", app.SendResetPasswordEmail)
 	mux.Post("/api/v1/authentication/change-password", app.ChangePassword)
+	mux.Post("/api/v1/authentication/request-verification-email", app.RequestVerificationEmail)
 
 	mux.Get("/api/v1/authentication/test-rpc", app.testRPC)
 

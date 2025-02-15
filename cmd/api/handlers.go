@@ -2517,8 +2517,6 @@ func (app *Config) returnLoggedInUserID(response jsonResponse) (string, error) {
 
 func (app *Config) SendResetPasswordEmail(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("TRY TO SEND RESET PASSWORD EMAIL")
-
 	//extract the request body
 	var requestPayload ResetPasswordEmailPayload
 
@@ -2530,10 +2528,10 @@ func (app *Config) SendResetPasswordEmail(w http.ResponseWriter, r *http.Request
 	}
 
 	// Validate the request payload
-	// if err := app.ValidateResetPasswordEmailInput(requestPayload); len(err) > 0 {
-	// 	app.errorJSON(w, errors.New("error doing validation for send reset password email"), err, http.StatusBadRequest)
-	// 	return
-	// }
+	if err := app.ValidateResetPasswordEmailInput(requestPayload); len(err) > 0 {
+		app.errorJSON(w, errors.New("error doing validation for send reset password email"), err, http.StatusBadRequest)
+		return
+	}
 
 	//create some json we will send to authservice
 	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")

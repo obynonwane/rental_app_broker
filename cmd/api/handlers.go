@@ -2517,8 +2517,6 @@ func (app *Config) returnLoggedInUserID(response jsonResponse) (string, error) {
 
 func (app *Config) SendResetPasswordEmail(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("TRY TO SEND RESET PASSWORD EMAIL")
-
 	//extract the request body
 	var requestPayload ResetPasswordEmailPayload
 

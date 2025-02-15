@@ -149,3 +149,18 @@ func (app *Config) ValidateChangePasswordInput(req ChangePasswordPayload) map[st
 
 	return errors
 }
+
+func (app *Config) ValidateEmailRequestInput(req RequestPasswordVerificationEmailPayload) map[string]string {
+
+	errors := map[string]string{}
+
+	if len(req.Email) < minEmailLen {
+		errors["email"] = fmt.Sprintf("%s is required", "email")
+	}
+
+	if !isEmailValid(req.Email) {
+		errors["email"] = fmt.Sprintf("%s supplied is invalid", "email")
+	}
+
+	return errors
+}

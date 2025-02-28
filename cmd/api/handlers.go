@@ -2706,13 +2706,13 @@ func (app *Config) RequestVerificationEmail(w http.ResponseWriter, r *http.Reque
 	// decode the json from the auth service
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 	if err != nil {
-		app.errorJSON(w, err, nil)
+		app.errorJSON(w, err, jsonFromService.StatusCode)
 		return
 	}
 
 	if response.StatusCode != http.StatusAccepted {
 		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), jsonFromService.StatusCode)
 		return
 	}
 
@@ -2722,6 +2722,74 @@ func (app *Config) RequestVerificationEmail(w http.ResponseWriter, r *http.Reque
 	payload.Message = jsonFromService.Message
 	payload.Data = jsonFromService.Data
 
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) EGetUsers(w http.ResponseWriter, r *http.Request) {
+
+	response, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+		return
+	}
+
+	app.EproceedGetUser(w)
+}
+
+func (app *Config) EproceedGetUser(w http.ResponseWriter) {
+
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("ELASTIC_SEARCH_SERVICE_URL"), "getusers")
+	log.Println("The endpoint:", authServiceUrl)
+
+	// Call the service by creating a request
+	request, err := http.NewRequest("GET", authServiceUrl, nil)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+
+	// Create an HTTP client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// Create a variable to read response.Body into
+	var jsonFromService jsonResponse
+
+	// Decode the JSON from the service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Check if the status code is Accepted
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New("unexpected status code received from service"), nil)
+		return
+	}
+
+	// Prepare the payload
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	// Write the JSON response
 	app.writeJSON(w, http.StatusOK, payload)
 }
 

@@ -223,12 +223,12 @@ func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 				// decode the json from the auth service
 				err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 				if err != nil {
-					app.errorJSON(w, err, nil)
+					app.errorJSON(w, err, nil, jsonFromService.StatusCode)
 					return
 				}
 
 				if response.StatusCode != http.StatusAccepted {
-					app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+					app.errorJSON(w, errors.New(jsonFromService.Message), nil, jsonFromService.StatusCode)
 					return
 				}
 
@@ -241,7 +241,7 @@ func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 				//convert the payload into string
 				b, err := json.Marshal(payload)
 				if err != nil {
-					app.errorJSON(w, errors.New("error marshalling payload into string for saving to redis"), nil)
+					app.errorJSON(w, errors.New("error marshalling payload into string for saving to redis"), payload.StatusCode)
 					return
 				}
 				//set the value in redis

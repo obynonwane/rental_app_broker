@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/rpc"
+	"net/url"
 	"os"
 	"reflect"
 	"strconv"
@@ -95,6 +96,10 @@ type ChangePasswordPayload struct {
 	Token           string `json:"token"`
 	Password        string `json:"password"`
 	ConfirmPassword string `json:"confirm_password"`
+}
+
+type IndexInventoryPayload struct {
+	Id string `json:"id"`
 }
 
 type RequestPasswordVerificationEmailPayload struct {
@@ -993,11 +998,11 @@ func (app *Config) GetStateLga(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve authorization token
-	authorizationHeader := r.Header.Get("Authorization")
-	if authorizationHeader == "" {
-		app.errorJSON(w, errors.New("authorization token is missing"), nil)
-		return
-	}
+	// authorizationHeader := r.Header.Get("Authorization")
+	// if authorizationHeader == "" {
+	// 	app.errorJSON(w, errors.New("authorization token is missing"), nil)
+	// 	return
+	// }
 
 	// Construct the URL
 	authServiceUrl := fmt.Sprintf("%s%s%s", os.Getenv("AUTH_URL"), "state/lgas/", id)
@@ -1011,7 +1016,7 @@ func (app *Config) GetStateLga(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Set the Authorization and Content-Type headers
-	request.Header.Set("Authorization", authorizationHeader)
+	// request.Header.Set("Authorization", authorizationHeader)
 	request.Header.Set("Content-Type", "application/json")
 
 	// Create an HTTP client and execute the request
@@ -2790,6 +2795,160 @@ func (app *Config) EproceedGetUser(w http.ResponseWriter) {
 	payload.Data = jsonFromService.Data
 
 	// Write the JSON response
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
+	log.Println("hit elastic endpoint")
+
+	// 2. retrieve query param
+	queryParams := r.URL.Query()
+	page := queryParams.Get("page")
+	if page == "" {
+		app.errorJSON(w, errors.New("page not supplied"), nil)
+		return
+	}
+	limit := queryParams.Get("limit")
+	if limit == "" {
+		app.errorJSON(w, errors.New("limit not supplied"), nil)
+		return
+	}
+
+	query := queryParams.Get("query")
+	if query == "" {
+		app.errorJSON(w, errors.New("search term not supplied"), nil)
+		return
+	}
+
+	// Construct query parameters for Elasticsearch
+	elasticQueryParams := url.Values{}
+	elasticQueryParams.Set("page", page)
+	elasticQueryParams.Set("limit", limit)
+	elasticQueryParams.Set("query", query)
+
+	// Build the full Elasticsearch service URL with query parameters
+	elasticServiceUrl := fmt.Sprintf("%s%s?%s",
+		os.Getenv("ELASTIC_SEARCH_SERVICE_URL"),
+		"inventory/search",
+		elasticQueryParams.Encode(),
+	)
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", elasticServiceUrl, nil)
+
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil, jsonFromService.StatusCode)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, jsonFromService.StatusCode)
+		return
+	}
+
+	// log.Println("LOG FROM CONTROLLER", jsonFromService)
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+
+}
+
+func (app *Config) IndexInventory(w http.ResponseWriter, r *http.Request) {
+
+	//extract the request body
+	var requestPayload IndexInventoryPayload
+
+	//extract the requestbody
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Construct query parameters for Elasticsearch
+	elasticQueryParams := url.Values{}
+	elasticQueryParams.Set("id", requestPayload.Id)
+
+	// Build the full Elasticsearch service URL with query parameters
+	elasticServiceUrl := fmt.Sprintf("%s%s?%s",
+		os.Getenv("ELASTIC_SEARCH_SERVICE_URL"),
+		"inventory/index",
+		elasticQueryParams.Encode(),
+	)
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", elasticServiceUrl, nil)
+
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		log.Println(jsonFromService.Message, jsonFromService)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
 	app.writeJSON(w, http.StatusOK, payload)
 }
 

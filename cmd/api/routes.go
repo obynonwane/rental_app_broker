@@ -71,6 +71,8 @@ func (app *Config) routes() http.Handler {
 
 	//Elastic search routes---------------------------------------------------//
 	mux.Get("/api/v1/elastic-search/getusers", app.EGetUsers)
+	mux.Get("/api/v1/elastic-search/inventory", app.SearchInventory)
+	mux.Post("/api/v1/elastic-search/index", app.IndexInventory)
 
 	// Add the Prometheus metrics endpoint to the router-----------------//
 	mux.Handle("/metrics", promhttp.Handler())

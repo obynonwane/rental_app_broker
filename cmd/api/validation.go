@@ -164,3 +164,20 @@ func (app *Config) ValidateEmailRequestInput(req RequestPasswordVerificationEmai
 
 	return errors
 }
+
+func (app *Config) ValidateSearchInput(req SearchPayload) map[string]string {
+
+	errors := map[string]string{}
+	if len(req.CountryID) < iniqueIDLen {
+		errors["country_id"] = fmt.Sprintf("country id length should be at least %d characters", minIDLen)
+	}
+
+	if len(req.StateID) < iniqueIDLen {
+		errors["state_id"] = fmt.Sprintf("state id length should be at least %d characters", minIDLen)
+	}
+	if len(req.LgaID) < iniqueIDLen {
+		errors["lga_id"] = fmt.Sprintf("lgs id length should be at least %d characters", minIDLen)
+	}
+
+	return errors
+}

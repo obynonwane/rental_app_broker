@@ -88,6 +88,15 @@ type ReplyRatingPayload struct {
 	ParentReplyID string `json:"parent_reply_id"`
 }
 
+type SearchPayload struct {
+	CountryID string `json:"country_id"`
+	StateID   string `json:"state_id"`
+	LgaID     string `json:"lga_id"`
+	Text      string `json:"text"`
+	Limit     string `json:"limit"`
+	Offset    string `json:"offset,"`
+}
+
 type ResetPasswordEmailPayload struct {
 	Email string `json:"email"`
 }
@@ -1679,6 +1688,7 @@ func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *Config) AllCategories(w http.ResponseWriter, r *http.Request) {
+
 	// get a gRPC client and dial using tcp
 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
@@ -2497,6 +2507,80 @@ func (app *Config) ReplyUserRating(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
 }
+
+func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
+
+	//1. variable of type ReplyRatingPayload
+	var requestPayload SearchPayload
+
+	//2. extract the requestbody
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// 3. Validate the request payload
+	if err := app.ValidateSearchInput(requestPayload); len(err) > 0 {
+		app.errorJSON(w, errors.New("error trying to reply rating"), err, http.StatusBadRequest)
+		return
+	}
+
+	//4.  establish connection via grpc
+	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer conn.Close()
+
+	//5. instantiate a new instnnce of inventory service from proto definition
+	c := inventory.NewInventoryServiceClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	defer cancel()
+
+	//6. create result & error channel
+	resultCh := make(chan *inventory.InventoryCollection, 1)
+	errorChannel := make(chan error, 1)
+
+	go func(state_id, country_id, lga_id, text, limit, offset string) {
+		// make the call via grpc
+		result, err := c.SearchInventory(ctx, &inventory.SearchInventoryRequest{
+			StateId:   state_id,
+			CountryId: country_id,
+			LgaId:     lga_id,
+			Text:      text,
+			Limit:     limit,
+			Offset:    offset,
+		})
+		if err != nil {
+			errorChannel <- err
+		}
+		resultCh <- result
+
+	}(requestPayload.StateID, requestPayload.CountryID, requestPayload.LgaID, requestPayload.Text, requestPayload.Limit, requestPayload.Offset)
+
+	// 7. select statement to wait
+	select {
+	case data := <-resultCh:
+		var payload jsonResponse
+		payload.Error = false
+		payload.Message = "search retrieved succesfully"
+		payload.Data = data
+		payload.StatusCode = 200
+		app.writeJSON(w, http.StatusAccepted, payload)
+
+	case err := <-errorChannel:
+		log.Println("Error replying rating:", err)
+		app.errorJSON(w, err, nil)
+
+	case <-ctx.Done():
+		// If the operation timed out, handle the timeout error
+		log.Println("Error: gRPC request timed out")
+		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
+	}
+}
+
 func (app *Config) returnLoggedInUserID(response jsonResponse) (string, error) {
 
 	// Extract user ID from response.Data
@@ -2796,86 +2880,6 @@ func (app *Config) EproceedGetUser(w http.ResponseWriter) {
 
 	// Write the JSON response
 	app.writeJSON(w, http.StatusOK, payload)
-}
-
-func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
-	log.Println("hit elastic endpoint")
-
-	// 2. retrieve query param
-	queryParams := r.URL.Query()
-	page := queryParams.Get("page")
-	if page == "" {
-		app.errorJSON(w, errors.New("page not supplied"), nil)
-		return
-	}
-	limit := queryParams.Get("limit")
-	if limit == "" {
-		app.errorJSON(w, errors.New("limit not supplied"), nil)
-		return
-	}
-
-	query := queryParams.Get("query")
-	if query == "" {
-		app.errorJSON(w, errors.New("search term not supplied"), nil)
-		return
-	}
-
-	// Construct query parameters for Elasticsearch
-	elasticQueryParams := url.Values{}
-	elasticQueryParams.Set("page", page)
-	elasticQueryParams.Set("limit", limit)
-	elasticQueryParams.Set("query", query)
-
-	// Build the full Elasticsearch service URL with query parameters
-	elasticServiceUrl := fmt.Sprintf("%s%s?%s",
-		os.Getenv("ELASTIC_SEARCH_SERVICE_URL"),
-		"inventory/search",
-		elasticQueryParams.Encode(),
-	)
-
-	// call the service by creating a request
-	request, err := http.NewRequest("GET", elasticServiceUrl, nil)
-
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	// Set the Content-Type header
-	request.Header.Set("Content-Type", "application/json")
-	//create a http client
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-	defer response.Body.Close()
-
-	// create a varabiel we'll read response.Body into
-	var jsonFromService jsonResponse
-
-	// decode the json from the auth service
-	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
-	if err != nil {
-		app.errorJSON(w, err, nil, jsonFromService.StatusCode)
-		return
-	}
-
-	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil, jsonFromService.StatusCode)
-		return
-	}
-
-	// log.Println("LOG FROM CONTROLLER", jsonFromService)
-	var payload jsonResponse
-	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
-	payload.Message = jsonFromService.Message
-	payload.Data = jsonFromService.Data
-
-	app.writeJSON(w, http.StatusOK, payload)
-
 }
 
 func (app *Config) IndexInventory(w http.ResponseWriter, r *http.Request) {

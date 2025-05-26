@@ -89,12 +89,14 @@ type ReplyRatingPayload struct {
 }
 
 type SearchPayload struct {
-	CountryID string `json:"country_id"`
-	StateID   string `json:"state_id"`
-	LgaID     string `json:"lga_id"`
-	Text      string `json:"text"`
-	Limit     string `json:"limit"`
-	Offset    string `json:"offset,"`
+	CountryID     string `json:"country_id"`
+	StateID       string `json:"state_id"`
+	LgaID         string `json:"lga_id"`
+	Text          string `json:"text"`
+	Limit         string `json:"limit"`
+	Offset        string `json:"offset"`
+	CategoryID    string `json:"category_id"`
+	SubcategoryID string `json:"subcategory_id"`
 }
 
 type ResetPasswordEmailPayload struct {
@@ -2521,10 +2523,10 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 3. Validate the request payload
-	if err := app.ValidateSearchInput(requestPayload); len(err) > 0 {
-		app.errorJSON(w, errors.New("error trying to reply rating"), err, http.StatusBadRequest)
-		return
-	}
+	// if err := app.ValidateSearchInput(requestPayload); len(err) > 0 {
+	// 	app.errorJSON(w, errors.New("error trying to reply rating"), err, http.StatusBadRequest)
+	// 	return
+	// }
 
 	//4.  establish connection via grpc
 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
@@ -2543,22 +2545,33 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 	resultCh := make(chan *inventory.InventoryCollection, 1)
 	errorChannel := make(chan error, 1)
 
-	go func(state_id, country_id, lga_id, text, limit, offset string) {
+	go func(state_id, country_id, lga_id, text, limit, offset, category_id, subcategory_id string) {
 		// make the call via grpc
 		result, err := c.SearchInventory(ctx, &inventory.SearchInventoryRequest{
-			StateId:   state_id,
-			CountryId: country_id,
-			LgaId:     lga_id,
-			Text:      text,
-			Limit:     limit,
-			Offset:    offset,
+			StateId:       state_id,
+			CountryId:     country_id,
+			LgaId:         lga_id,
+			Text:          text,
+			Limit:         limit,
+			Offset:        offset,
+			CategoryId:    category_id,
+			SubcategoryId: subcategory_id,
 		})
 		if err != nil {
 			errorChannel <- err
 		}
 		resultCh <- result
 
-	}(requestPayload.StateID, requestPayload.CountryID, requestPayload.LgaID, requestPayload.Text, requestPayload.Limit, requestPayload.Offset)
+	}(
+		requestPayload.StateID,
+		requestPayload.CountryID,
+		requestPayload.LgaID,
+		requestPayload.Text,
+		requestPayload.Limit,
+		requestPayload.Offset,
+		requestPayload.CategoryID,
+		requestPayload.SubcategoryID,
+	)
 
 	// 7. select statement to wait
 	select {

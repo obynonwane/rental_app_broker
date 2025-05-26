@@ -60,6 +60,8 @@ github.com/obynonwane/rental-service-proto v0.0.0-20250523222931-21ea058c6964 h1
 github.com/obynonwane/rental-service-proto v0.0.0-20250523222931-21ea058c6964/go.mod h1:pqb4O+AOCWtb/hx41nlenapts8Zl9fTFVbXJWDACFBY=
 github.com/obynonwane/rental-service-proto v0.0.0-20250524010054-144caebeb370 h1:yzgO3kBZnpAS/cfcWXbVWZBw5f6maVU0+cnH/SvuLPo=
 github.com/obynonwane/rental-service-proto v0.0.0-20250524010054-144caebeb370/go.mod h1:pqb4O+AOCWtb/hx41nlenapts8Zl9fTFVbXJWDACFBY=
+github.com/obynonwane/rental-service-proto v0.0.0-20250526151048-8d1c59e0f020 h1:lfZBU/E5Jc+syfUX3pec+KqUgCjm6r9iLcgXO2xc25w=
+github.com/obynonwane/rental-service-proto v0.0.0-20250526151048-8d1c59e0f020/go.mod h1:pqb4O+AOCWtb/hx41nlenapts8Zl9fTFVbXJWDACFBY=
 github.com/onsi/ginkgo v1.6.0/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
 github.com/onsi/ginkgo v1.12.1/go.mod h1:zj2OWP4+oCPe1qIXoGWkgMRwljMUYCdkwsT2108oapk=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=

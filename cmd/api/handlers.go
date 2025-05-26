@@ -2576,12 +2576,39 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 	// 7. select statement to wait
 	select {
 	case data := <-resultCh:
-		var payload jsonResponse
-		payload.Error = false
-		payload.Message = "search retrieved succesfully"
-		payload.Data = data
-		payload.StatusCode = 200
-		app.writeJSON(w, http.StatusAccepted, payload)
+		// var payload jsonResponse
+		// payload.Error = false
+		// payload.Message = "search retrieved succesfully"
+		// payload.Data = data
+		// payload.StatusCode = 200
+		// app.writeJSON(w, http.StatusAccepted, payload)
+
+		// Ensure inventories is not nil to return [] instead of null
+		inventories := data.Inventories
+		if inventories == nil {
+			inventories = []*inventory.Inventory{}
+		}
+
+		// Build response payload
+		mapped := struct {
+			Inventories []*inventory.Inventory `json:"inventories"`
+			TotalCount  int32                  `json:"total_count"`
+			Offset      int32                  `json:"offset"`
+			Limit       int32                  `json:"limit"`
+		}{
+			Inventories: inventories,
+			TotalCount:  data.TotalCount,
+			Offset:      data.Offset,
+			Limit:       data.Limit,
+		}
+
+		payload := jsonResponse{
+			Error:      false,
+			Message:    "search retrieved successfully",
+			StatusCode: 200,
+			Data:       mapped,
+		}
+		app.writeJSON(w, http.StatusOK, payload)
 
 	case err := <-errorChannel:
 		log.Println("Error replying rating:", err)

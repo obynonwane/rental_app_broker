@@ -2125,6 +2125,9 @@ func (app *Config) GetInventoryDetail(w http.ResponseWriter, r *http.Request) {
 	// 1. retrieve inventory id
 	id := chi.URLParam(r, "id")
 
+	slug_ulid := r.FormValue("slug_ulid")
+	inventory_id := r.FormValue("inventory_id")
+
 	//2.  establish connection via grpc
 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
@@ -2144,8 +2147,9 @@ func (app *Config) GetInventoryDetail(w http.ResponseWriter, r *http.Request) {
 
 	go func(id string) {
 		// make the call via grpc
-		result, err := c.GetInventoryByID(ctx, &inventory.ResourceId{
-			Id: id,
+		result, err := c.GetInventoryByID(ctx, &inventory.SingleInventoryRequestDetail{
+			SlugUlid:    slug_ulid,
+			InventoryId: inventory_id,
 		})
 		if err != nil {
 			errorChannel <- err

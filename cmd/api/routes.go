@@ -63,7 +63,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/inventory/category/{id}", app.GetCategoryByID)
 	mux.Post("/api/v1/inventory/rating", app.RateInventory)
 	mux.Post("/api/v1/inventory/rating-user", app.RateUser)
-	mux.Get("/api/v1/inventory/inventory-detail/{id}", app.GetInventoryDetail)
+	mux.Get("/api/v1/inventory/inventory-detail", app.GetInventoryDetail)
 	mux.Get("/api/v1/inventory/user-rating/{id}", app.GetUserRatings)
 	mux.Get("/api/v1/inventory/inventory-rating/{id}", app.GetInventoryRatings)
 	mux.Post("/api/v1/inventory/reply-inventory-rating", app.ReplyInventoryRating)
@@ -71,9 +71,9 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/inventory/search", app.SearchInventory)
 
 	//Elastic search routes---------------------------------------------------//
-	mux.Get("/api/v1/elastic-search/getusers", app.EGetUsers)
-	mux.Get("/api/v1/elastic-search/inventory", app.SearchInventory)
-	mux.Post("/api/v1/elastic-search/index", app.IndexInventory)
+	// mux.Get("/api/v1/elastic-search/getusers", app.EGetUsers)
+	// mux.Get("/api/v1/elastic-search/inventory", app.SearchInventory)
+	// mux.Post("/api/v1/elastic-search/index", app.IndexInventory)
 
 	// Add the Prometheus metrics endpoint to the router-----------------//
 	mux.Handle("/metrics", promhttp.Handler())

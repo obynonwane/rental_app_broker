@@ -98,6 +98,7 @@ type SearchPayload struct {
 	Offset        string `json:"offset"`
 	CategoryID    string `json:"category_id"`
 	SubcategoryID string `json:"subcategory_id"`
+	Ulid          string `json:"ulid"`
 }
 
 type ResetPasswordEmailPayload struct {
@@ -2559,7 +2560,7 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 	resultCh := make(chan *inventory.InventoryCollection, 1)
 	errorChannel := make(chan error, 1)
 
-	go func(state_id, country_id, lga_id, text, limit, offset, category_id, subcategory_id string) {
+	go func(state_id, country_id, lga_id, text, limit, offset, category_id, subcategory_id, ulid string) {
 		// make the call via grpc
 		result, err := c.SearchInventory(ctx, &inventory.SearchInventoryRequest{
 			StateId:       state_id,
@@ -2570,6 +2571,7 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 			Offset:        offset,
 			CategoryId:    category_id,
 			SubcategoryId: subcategory_id,
+			Ulid:          ulid,
 		})
 		if err != nil {
 			errorChannel <- err
@@ -2585,6 +2587,7 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 		requestPayload.Offset,
 		requestPayload.CategoryID,
 		requestPayload.SubcategoryID,
+		requestPayload.Ulid,
 	)
 
 	// 7. select statement to wait

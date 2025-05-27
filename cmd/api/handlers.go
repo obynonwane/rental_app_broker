@@ -1552,6 +1552,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 			app.errorJSON(w, errors.New("missing or invalid user ID"), nil)
 			return
 		}
+
 	}
 
 	err = r.ParseMultipartForm(20 << 20)
@@ -1569,6 +1570,12 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	state_id := r.FormValue("state_id")
 	lga_id := r.FormValue("lga_id")
 	var images []*inventory.ImageData
+
+	// 3. Validate the request payload
+	if err := app.ValidateCreateInventoryInput(category_id, sub_category_id, name, description, country_id, state_id, lga_id, offer_price); len(err) > 0 {
+		app.errorJSON(w, errors.New("error trying to create inventory"), err, http.StatusBadRequest)
+		return
+	}
 
 	// Iterate over all files with the key "images"
 	files := r.MultipartForm.File["images"]

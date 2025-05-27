@@ -16,6 +16,7 @@ const (
 	minIDLen        = 36
 	minCommentLen   = 5
 	tokenMinLen     = 30
+	descLen         = 100
 )
 
 func (app *Config) ValidateLoginInput(req LoginPayload) map[string]string {
@@ -107,6 +108,47 @@ func (app *Config) ValidateReplyRatingInput(req ReplyRatingPayload) map[string]s
 		if len(req.ParentReplyID) < minLastNameLen {
 			errors["parent_reply_id"] = fmt.Sprintf("parent reply id length should be at least %d characters", minIDLen)
 		}
+	}
+
+	return errors
+}
+
+func (app *Config) ValidateCreateInventoryInput(category_id, sub_category_id, name, description, country_id, state_id, lga_id string, offer_price float64) map[string]string {
+	errors := map[string]string{}
+
+	if len(category_id) < iniqueIDLen {
+		errors["category_id"] = fmt.Sprintf("category id length should be at least %d characters", minIDLen)
+	}
+
+	if len(sub_category_id) < iniqueIDLen {
+		errors["sub_category_id"] = fmt.Sprintf("subcategory id length should be at least %d characters", minIDLen)
+	}
+
+	if len(description) < descLen {
+		errors["description"] = fmt.Sprintf("description length should be at least %d characters", descLen)
+	}
+
+	if len(name) < minLastNameLen {
+		errors["name"] = fmt.Sprintf("name length should be at least %d characters", minCommentLen)
+	}
+
+	if len(country_id) < iniqueIDLen {
+		errors["country_id"] = fmt.Sprintf("country id length should be at least %d characters", minIDLen)
+	}
+
+	if len(state_id) < iniqueIDLen {
+		errors["state_id"] = fmt.Sprintf("state id length should be at least %d characters", minCommentLen)
+	}
+
+	if len(lga_id) < iniqueIDLen {
+		errors["lga_id"] = fmt.Sprintf("lga id length should be at least %d characters", minCommentLen)
+	}
+
+	// Offer price validation
+	if offer_price <= 0 {
+		errors["offer_price"] = "offer price must be greater than zero"
+	} else if offer_price > 10000000 {
+		errors["offer_price"] = "offer price seems too high"
 	}
 
 	return errors

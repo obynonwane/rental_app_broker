@@ -19,6 +19,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-redis/redis"
+	"github.com/obynonwane/broker-service/utility"
 	"github.com/obynonwane/rental-service-proto/inventory"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -1560,6 +1561,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	category_id := r.FormValue("category_id")
+	offer_price := utility.ParseStringToDouble(r.FormValue("offer_price"))
 	sub_category_id := r.FormValue("sub_category_id")
 	name := r.FormValue("name")
 	description := r.FormValue("description")
@@ -1622,6 +1624,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		Description:   description,
 		Images:        images,
 		UserId:        userID,
+		OfferPrice:    offer_price,
 	})
 
 	if err != nil {

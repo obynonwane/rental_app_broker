@@ -107,6 +107,11 @@ type SearchPayload struct {
 	SubcategorySlug string `json:"subcategory_slug"`
 }
 
+type GetCategoryByIDPayload struct {
+	CategoryID   string `json:"category_id"`
+	CategorySlug string `json:"category_slug"`
+}
+
 type ResetPasswordEmailPayload struct {
 	Email string `json:"email"`
 }
@@ -1867,6 +1872,9 @@ func (app *Config) GetCategorySubcategories(w http.ResponseWriter, r *http.Reque
 
 func (app *Config) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 
+	category_id := r.FormValue("category_id")
+	category_slug := r.FormValue("category_slug")
+
 	// establish connection via grpc
 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
@@ -1880,24 +1888,22 @@ func (app *Config) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
 	defer cancel()
 
-	// retrive the category ID
-	id := chi.URLParam(r, "id")
-
 	// declare response and error channel
 	responseChannel := make(chan *inventory.CategoryResponse)
 	errorChannel := make(chan error)
 
 	// declare a go routine to initiate asynchronour process
-	go func(id string) {
-		data, err := c.GetCategory(ctx, &inventory.ResourceId{Id: id})
+	go func(category_id, category_slug string) {
+		data, err := c.GetCategory(ctx, &inventory.GetCategoryByIDPayload{
+			CategoryId:   category_id,
+			CategorySlug: category_slug})
 		if err != nil {
 			errorChannel <- err
-
 			return
 		}
 		responseChannel <- data
 
-	}(id)
+	}(category_id, category_slug)
 
 	select {
 	case data := <-responseChannel:

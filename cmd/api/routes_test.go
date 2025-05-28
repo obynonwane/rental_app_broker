@@ -45,7 +45,7 @@ func Test_routes_exist(t *testing.T) {
 		"/api/v1/inventory/all-categories",
 		"/api/v1/inventory/all-subcategories",
 		"/api/v1/inventory/category/subcategory/{id}",
-		"/api/v1/inventory/category/{id}",
+		"/api/v1/inventory/category",
 		"/api/v1/inventory/rating",
 		"/api/v1/inventory/rating-user",
 		"/metrics",

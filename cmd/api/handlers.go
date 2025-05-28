@@ -99,6 +99,12 @@ type SearchPayload struct {
 	CategoryID    string `json:"category_id"`
 	SubcategoryID string `json:"subcategory_id"`
 	Ulid          string `json:"ulid"`
+
+	StateSlug       string `json:"state_slug"`
+	CountrySlug     string `json:"country_slug"`
+	LgaSlug         string `json:"lga_slug"`
+	CategorySlug    string `json:"category_slug"`
+	SubcategorySlug string `json:"subcategory_slug"`
 }
 
 type ResetPasswordEmailPayload struct {
@@ -2560,18 +2566,23 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 	resultCh := make(chan *inventory.InventoryCollection, 1)
 	errorChannel := make(chan error, 1)
 
-	go func(state_id, country_id, lga_id, text, limit, offset, category_id, subcategory_id, ulid string) {
+	go func(state_id, country_id, lga_id, text, limit, offset, category_id, subcategory_id, ulid, state_slug, country_slug, lga_slug, category_slug, subcategory_slug string) {
 		// make the call via grpc
 		result, err := c.SearchInventory(ctx, &inventory.SearchInventoryRequest{
-			StateId:       state_id,
-			CountryId:     country_id,
-			LgaId:         lga_id,
-			Text:          text,
-			Limit:         limit,
-			Offset:        offset,
-			CategoryId:    category_id,
-			SubcategoryId: subcategory_id,
-			Ulid:          ulid,
+			StateId:         state_id,
+			CountryId:       country_id,
+			LgaId:           lga_id,
+			Text:            text,
+			Limit:           limit,
+			Offset:          offset,
+			CategoryId:      category_id,
+			SubcategoryId:   subcategory_id,
+			Ulid:            ulid,
+			StateSlug:       state_slug,
+			CountrySlug:     country_slug,
+			LgaSlug:         lga_slug,
+			CategorySlug:    category_slug,
+			SubcategorySlug: subcategory_slug,
 		})
 		if err != nil {
 			errorChannel <- err
@@ -2588,6 +2599,11 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 		requestPayload.CategoryID,
 		requestPayload.SubcategoryID,
 		requestPayload.Ulid,
+		requestPayload.StateSlug,
+		requestPayload.CountrySlug,
+		requestPayload.LgaSlug,
+		requestPayload.CategorySlug,
+		requestPayload.SubcategorySlug,
 	)
 
 	// 7. select statement to wait

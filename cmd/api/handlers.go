@@ -186,14 +186,13 @@ func (app *Config) Signup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
 	var payload jsonResponse
 	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
+	payload.StatusCode = jsonFromService.StatusCode
 	payload.Message = jsonFromService.Message
 	payload.Data = jsonFromService.Data
 
@@ -258,7 +257,7 @@ func (app *Config) Login(w http.ResponseWriter, r *http.Request) {
 				}
 
 				if response.StatusCode != http.StatusAccepted {
-					app.errorJSON(w, errors.New(jsonFromService.Message), nil, jsonFromService.StatusCode)
+					app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 					return
 				}
 
@@ -434,7 +433,7 @@ func (app *Config) VerifyToken(w http.ResponseWriter, r *http.Request) {
 			}
 
 			if response.StatusCode != http.StatusAccepted {
-				app.errorJSON(w, errors.New("error verifying token"), nil)
+				app.errorJSON(w, errors.New("error verifying token"), nil, response.StatusCode)
 				return
 			}
 
@@ -517,7 +516,7 @@ func (app *Config) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("error logging out"), nil)
+		app.errorJSON(w, errors.New("error logging out"), nil, response.StatusCode)
 		return
 	}
 
@@ -570,7 +569,7 @@ func (app *Config) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
@@ -629,7 +628,7 @@ func (app *Config) TestEmail(w http.ResponseWriter, r *http.Request) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("error sending mail"), nil)
+		app.errorJSON(w, errors.New("error sending mail"), nil, response.StatusCode)
 		return
 	}
 
@@ -693,7 +692,7 @@ func (app *Config) proceedGetUser(w http.ResponseWriter) {
 
 	// Check if the status code is Accepted
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("unexpected status code received from service"), nil)
+		app.errorJSON(w, errors.New("unexpected status code received from service"), nil, response.StatusCode)
 		return
 	}
 
@@ -767,8 +766,7 @@ func (app *Config) ParticipantCreateStaff(w http.ResponseWriter, r *http.Request
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
@@ -1354,6 +1352,7 @@ func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
 	request.Header.Set("authorization", authorizationHeader)
 
 	if err != nil {
+		log.Println("error 1")
 		app.errorJSON(w, err, nil)
 		return
 	}
@@ -1380,14 +1379,13 @@ func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
 	var payload jsonResponse
 	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
+	payload.StatusCode = jsonFromService.StatusCode
 	payload.Message = jsonFromService.Message
 	payload.Data = jsonFromService.Data
 
@@ -1449,14 +1447,13 @@ func (app *Config) SignupAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
 	var payload jsonResponse
 	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
+	payload.StatusCode = jsonFromService.StatusCode
 	payload.Message = jsonFromService.Message
 	payload.Data = jsonFromService.Data
 
@@ -2741,8 +2738,7 @@ func (app *Config) SendResetPasswordEmail(w http.ResponseWriter, r *http.Request
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
@@ -2810,8 +2806,7 @@ func (app *Config) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
@@ -2878,8 +2873,7 @@ func (app *Config) RequestVerificationEmail(w http.ResponseWriter, r *http.Reque
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), jsonFromService.StatusCode)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 
@@ -2945,7 +2939,7 @@ func (app *Config) EproceedGetUser(w http.ResponseWriter) {
 
 	// Check if the status code is Accepted
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("unexpected status code received from service"), nil)
+		app.errorJSON(w, errors.New("unexpected status code received from service"), nil, response.StatusCode)
 		return
 	}
 
@@ -3020,8 +3014,7 @@ func (app *Config) IndexInventory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if response.StatusCode != http.StatusAccepted {
-		log.Println(jsonFromService.Message, jsonFromService)
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 		return
 	}
 

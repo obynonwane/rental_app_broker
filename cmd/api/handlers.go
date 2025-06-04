@@ -1924,15 +1924,17 @@ func (app *Config) GetCategoryByID(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (app *Config) ExtractLoggedInUser(w http.ResponseWriter, r *http.Request) (string, error) {
+func (app *Config) ExtractLoggedInUser(w http.ResponseWriter, r *http.Request) (string, error, int) {
 	// verify the user token
 	response, err := app.getToken(r)
 	if err != nil {
-		return "", fmt.Errorf("%s", response.Message)
+		log.Println(response, "The response HERE")
+		return "", fmt.Errorf("%s", response.Message), response.StatusCode
 	}
 
 	if response.Error {
-		return "", fmt.Errorf("%s", response.Message)
+		log.Println(response, "The response HERE")
+		return "", fmt.Errorf("%s", response.Message), response.StatusCode
 	}
 
 	// Extract user ID from response.Data
@@ -1941,23 +1943,23 @@ func (app *Config) ExtractLoggedInUser(w http.ResponseWriter, r *http.Request) (
 		// Assert response.Data is a map
 		dataMap, ok := response.Data.(map[string]any)
 		if !ok {
-			return "", fmt.Errorf("invalid data format")
+			return "", fmt.Errorf("invalid data format"), response.StatusCode
 		}
 
 		// Extract "user" field and assert it is a map
 		userData, ok := dataMap["user"].(map[string]any)
 		if !ok {
-			return "", fmt.Errorf("missing or invalid user data")
+			return "", fmt.Errorf("missing or invalid user data"), response.StatusCode
 		}
 
 		// Extract "id" field and assert it is a string
 		userID, ok = userData["id"].(string)
 		if !ok {
-			return "", fmt.Errorf("missing or invalid user ID")
+			return "", fmt.Errorf("missing or invalid user ID"), response.StatusCode
 		}
 	}
 
-	return userID, nil
+	return userID, nil, response.StatusCode
 }
 
 func (app *Config) RateInventory(w http.ResponseWriter, r *http.Request) {
@@ -1989,9 +1991,9 @@ func (app *Config) RateInventory(w http.ResponseWriter, r *http.Request) {
 	ratingInt32 := int32(ratingInt)
 
 	// the user
-	userId, err := app.ExtractLoggedInUser(w, r)
+	userId, err, statusCodeRes := app.ExtractLoggedInUser(w, r)
 	if err != nil {
-		app.errorJSON(w, err, nil)
+		app.errorJSON(w, err, nil, statusCodeRes)
 		return
 	}
 
@@ -2074,9 +2076,9 @@ func (app *Config) RateUser(w http.ResponseWriter, r *http.Request) {
 	ratingInt32 := int32(ratingInt)
 
 	// the user
-	raterId, err := app.ExtractLoggedInUser(w, r)
+	raterId, err, statusCodeRes  := app.ExtractLoggedInUser(w, r)
 	if err != nil {
-		app.errorJSON(w, err, nil)
+		app.errorJSON(w, err, nil, statusCodeRes )
 		return
 	}
 

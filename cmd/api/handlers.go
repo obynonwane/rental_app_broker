@@ -330,6 +330,7 @@ func (app *Config) GetMe(w http.ResponseWriter, r *http.Request) {
 			client := &http.Client{}
 			response, err := client.Do(request)
 			if err != nil {
+
 				log.Println(err)
 				app.errorJSON(w, err, nil)
 				return
@@ -342,18 +343,18 @@ func (app *Config) GetMe(w http.ResponseWriter, r *http.Request) {
 			// decode the json from the auth service
 			err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 			if err != nil {
-				app.errorJSON(w, err, nil)
+				app.errorJSON(w, err, nil, jsonFromService.StatusCode)
 				return
 			}
 
 			if response.StatusCode != http.StatusAccepted {
-				app.errorJSON(w, errors.New(jsonFromService.Message), nil)
+				app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
 				return
 			}
 
 			var payload jsonResponse
 			payload.Error = jsonFromService.Error
-			payload.StatusCode = http.StatusOK
+			payload.StatusCode = jsonFromService.StatusCode
 			payload.Message = jsonFromService.Message
 			payload.Data = jsonFromService.Data
 
@@ -765,7 +766,6 @@ func (app *Config) ParticipantCreateStaff(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	log.Println("response from auth service", jsonFromService.Message)
 	if response.StatusCode != http.StatusAccepted {
 		log.Println(jsonFromService.Message, jsonFromService)
 		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
@@ -1379,7 +1379,6 @@ func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("response from auth service", jsonFromService)
 	if response.StatusCode != http.StatusAccepted {
 		log.Println(jsonFromService.Message, jsonFromService)
 		app.errorJSON(w, errors.New(jsonFromService.Message), nil)
@@ -1449,7 +1448,6 @@ func (app *Config) SignupAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("response from auth service", jsonFromService)
 	if response.StatusCode != http.StatusAccepted {
 		log.Println(jsonFromService.Message, jsonFromService)
 		app.errorJSON(w, errors.New(jsonFromService.Message), nil)

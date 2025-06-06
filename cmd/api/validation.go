@@ -223,3 +223,45 @@ func (app *Config) ValidateSearchInput(req SearchPayload) map[string]string {
 
 	return errors
 }
+
+type ProductPurpose string
+type AvailabilityStatus string
+type RentalDuration string
+type NegotiableStatus string
+
+const (
+	ProductPurposeSale   ProductPurpose = "sale"
+	ProductPurposeRental ProductPurpose = "rental"
+
+	Available   AvailabilityStatus = "yes"
+	Unavailable AvailabilityStatus = "no"
+
+	Hourly   RentalDuration = "hourly"
+	Daily    RentalDuration = "daily"
+	Monthly  RentalDuration = "monthly"
+	Annually RentalDuration = "annually"
+
+	Negotiable    NegotiableStatus = "yes"
+	NonNegotiable NegotiableStatus = "no"
+)
+
+func (p ProductPurpose) IsValid() bool {
+	return p == ProductPurposeSale || p == ProductPurposeRental
+}
+
+func (a AvailabilityStatus) IsValid() bool {
+	return a == Available || a == Unavailable
+}
+
+func (d RentalDuration) IsValid() bool {
+	switch d {
+	case Hourly, Daily, Monthly, Annually:
+		return true
+	default:
+		return false
+	}
+}
+
+func (n NegotiableStatus) IsValid() bool {
+	return n == Negotiable || n == NonNegotiable
+}

@@ -1537,6 +1537,44 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//=========================================Extracting form details===============================================================
+
+	name := r.FormValue("name")
+	product_purpose := ProductPurpose(r.FormValue("product_purpose"))
+	quantity := utility.ParseStringToDouble(r.FormValue("quantity"))
+	is_available := AvailabilityStatus(r.FormValue("is_available"))
+	rental_duration := RentalDuration(r.FormValue("rental_duration"))
+	offer_price := utility.ParseStringToDouble(r.FormValue("offer_price"))
+	security_deposit := utility.ParseStringToDouble(r.FormValue("security_deposit"))
+	country_id := r.FormValue("country_id")
+	state_id := r.FormValue("state_id")
+	lga_id := r.FormValue("lga_id")
+	category_id := r.FormValue("category_id")
+	sub_category_id := r.FormValue("sub_category_id")
+	description := r.FormValue("description")
+	tags := r.FormValue("tags")
+	metadata := r.FormValue("metadata")
+	negotiable := NegotiableStatus(r.FormValue("negotiable"))
+	//================================================================================================================================
+
+	// check the inputs
+	if !product_purpose.IsValid() {
+		app.errorJSON(w, errors.New("invalid product_purpose: either rental or sale"), http.StatusBadRequest)
+		return
+	}
+	if !is_available.IsValid() {
+		app.errorJSON(w, errors.New("invalid is_available: either yes or no"), http.StatusBadRequest)
+		return
+	}
+	if !rental_duration.IsValid() {
+		app.errorJSON(w, errors.New("invalid rental duration: either yes or no"), http.StatusBadRequest)
+		return
+	}
+	if !negotiable.IsValid() {
+		app.errorJSON(w, errors.New("invalid negotiable value: eithe yes or no"), http.StatusBadRequest)
+		return
+	}
+
 	// Extract user ID from response.Data
 	var userID string
 	if response.Data != nil {
@@ -1569,14 +1607,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category_id := r.FormValue("category_id")
-	offer_price := utility.ParseStringToDouble(r.FormValue("offer_price"))
-	sub_category_id := r.FormValue("sub_category_id")
-	name := r.FormValue("name")
-	description := r.FormValue("description")
-	country_id := r.FormValue("country_id")
-	state_id := r.FormValue("state_id")
-	lga_id := r.FormValue("lga_id")
+	//=========================================Working on  Image Array ===============================================================
 	var images []*inventory.ImageData
 
 	// 3. Validate the request payload
@@ -1615,7 +1646,44 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 			ImageType: imageType, // Example MIME type; adjust as necessary
 		})
 	}
+	//================================================================================================================================
 
+	//=========================================Working on Primary Image ===============================================================
+
+	var primaryImage *inventory.ImageData
+
+	// Retrieve the primary image from the form data
+	primary_image, _, err := r.FormFile("primary_image")
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer primary_image.Close()
+
+	// Copy primary image data into a buffer
+	var primaryImageDataBuffer bytes.Buffer
+	_, err = io.Copy(&primaryImageDataBuffer, primary_image)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Get the image type safely
+	imageBytes := primaryImageDataBuffer.Bytes()
+	sampleSize := len(imageBytes)
+	if sampleSize > 512 {
+		sampleSize = 512
+	}
+	primaryImageType := http.DetectContentType(primaryImageDataBuffer.Bytes()[:512])
+
+	primaryImage = &inventory.ImageData{
+		ImageData: primaryImageDataBuffer.Bytes(),
+		ImageType: primaryImageType,
+	}
+
+	//====================================================================================================================================
+
+	//========================================================Make Call Via gRPC to Inventory service======================================
 	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		app.errorJSON(w, err, nil)
@@ -1630,22 +1698,32 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	data, err := c.CreateInventory(ctx, &inventory.CreateInventoryRequest{
-		CategoryId:    category_id,
-		SubCategoryId: sub_category_id,
-		CountryId:     country_id,
-		StateId:       state_id,
-		LgaId:         lga_id,
-		Name:          name,
-		Description:   description,
-		Images:        images,
-		UserId:        userID,
-		OfferPrice:    offer_price,
+		CategoryId:      category_id,
+		SubCategoryId:   sub_category_id,
+		CountryId:       country_id,
+		StateId:         state_id,
+		LgaId:           lga_id,
+		Name:            name,
+		Description:     description,
+		Images:          images,
+		UserId:          userID,
+		OfferPrice:      offer_price,
+		ProductPurpose:  string(product_purpose),
+		Quantity:        quantity,
+		IsAvailable:     string(is_available),
+		RentalDuration:  string(rental_duration),
+		SecurityDeposit: security_deposit,
+		Tags:            tags,
+		Metadata:        metadata,
+		Negotiable:      string(negotiable),
+		PrimaryImage:    primaryImage,
 	})
 
 	if err != nil {
 		app.errorJSON(w, err, nil)
 		return
 	}
+	//====================================================================================================================================
 
 	var payload jsonResponse
 	payload.Error = data.Error
@@ -2076,9 +2154,9 @@ func (app *Config) RateUser(w http.ResponseWriter, r *http.Request) {
 	ratingInt32 := int32(ratingInt)
 
 	// the user
-	raterId, err, statusCodeRes  := app.ExtractLoggedInUser(w, r)
+	raterId, err, statusCodeRes := app.ExtractLoggedInUser(w, r)
 	if err != nil {
-		app.errorJSON(w, err, nil, statusCodeRes )
+		app.errorJSON(w, err, nil, statusCodeRes)
 		return
 	}
 

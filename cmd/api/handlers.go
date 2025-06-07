@@ -1566,9 +1566,15 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		app.errorJSON(w, errors.New("invalid is_available: either yes or no"), http.StatusBadRequest)
 		return
 	}
-	if !rental_duration.IsValid() {
-		app.errorJSON(w, errors.New("invalid rental duration: either yes or no"), http.StatusBadRequest)
-		return
+	if product_purpose == ProductPurposeRental {
+		if !rental_duration.IsValid() {
+			app.errorJSON(w, errors.New("invalid rental duration: either hourly, daily, monthly or  annually"), http.StatusBadRequest)
+			return
+		}
+
+		if security_deposit <= 0 {
+			security_deposit = 0
+		}
 	}
 	if !negotiable.IsValid() {
 		app.errorJSON(w, errors.New("invalid negotiable value: eithe yes or no"), http.StatusBadRequest)

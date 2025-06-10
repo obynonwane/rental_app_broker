@@ -1545,6 +1545,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	is_available := AvailabilityStatus(r.FormValue("is_available"))
 	rental_duration := RentalDuration(r.FormValue("rental_duration"))
 	offer_price := utility.ParseStringToDouble(r.FormValue("offer_price"))
+	minimum_price := utility.ParseStringToDouble(r.FormValue("minimum_price"))
 	security_deposit := utility.ParseStringToDouble(r.FormValue("security_deposit"))
 	country_id := r.FormValue("country_id")
 	state_id := r.FormValue("state_id")
@@ -1564,6 +1565,10 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	}
 	if !is_available.IsValid() {
 		app.errorJSON(w, errors.New("invalid is_available: either yes or no"), http.StatusBadRequest)
+		return
+	}
+	if minimum_price > offer_price {
+		app.errorJSON(w, errors.New("invalid: minimum price can not be greater than offer price"), http.StatusBadRequest)
 		return
 	}
 	if product_purpose == ProductPurposeRental {
@@ -1723,6 +1728,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		Metadata:        metadata,
 		Negotiable:      string(negotiable),
 		PrimaryImage:    primaryImage,
+		MinimumPrice:    minimum_price,
 	})
 
 	if err != nil {

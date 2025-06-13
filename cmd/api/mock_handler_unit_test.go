@@ -85,7 +85,7 @@ func TestSignupHandler(t *testing.T) {
 	// Define the behavior for Signup
 	mockHandler.SignupFunc = func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"message": "user account created", "status_code": 200, "error": false}`))
+		w.Write([]byte(`{"message": "user account created, check your email", "status_code": 200, "error": false}`))
 	}
 
 	// Create a test request
@@ -104,7 +104,7 @@ func TestSignupHandler(t *testing.T) {
 	if rr.Code != http.StatusOK {
 		t.Fatalf("Expected status OK, got %v", rr.Code)
 	}
-	expected := `{"message": "user account created", "status_code": 200, "error": false}`
+	expected := `{"message": "user account created, check your email", "status_code": 200, "error": false}`
 	if rr.Body.String() != expected {
 		t.Fatalf("Expected response body %v, got %v", expected, rr.Body.String())
 	}

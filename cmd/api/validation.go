@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"time"
 )
 
 const (
@@ -219,6 +220,56 @@ func (app *Config) ValidateSearchInput(req SearchPayload) map[string]string {
 	}
 	if len(req.LgaID) < iniqueIDLen {
 		errors["lga_id"] = fmt.Sprintf("lgs id length should be at least %d characters", minIDLen)
+	}
+
+	return errors
+}
+
+func (app *Config) ValidateBookingInput(req CreateBookingPayload) map[string]string {
+	errors := map[string]string{}
+
+	if len(req.InventoryId) == 0 {
+		errors["inventory_id"] = "inventory_id is required"
+	}
+
+	if len(req.RentalType) == 0 {
+		errors["rental_type"] = "rental_type is required"
+	}
+
+	if req.RentalDuration <= 0 {
+		errors["rental_duration"] = "rental_duration must be greater than zero"
+	}
+
+	if req.SecurityDeposit < 0 {
+		errors["security_deposit"] = "security_deposit cannot be negative"
+	}
+
+	if req.OfferPricePerUnit <= 0 {
+		errors["offer_price_per_unit"] = "offer_price_per_unit must be greater than zero"
+	}
+
+	if req.Quantity <= 0 {
+		errors["quantity"] = "quantity must be greater than zero"
+	}
+
+	// Validate date formats (assuming YYYY-MM-DD)
+	if _, err := time.Parse("2006-01-02", req.StartDate); err != nil {
+		errors["start_date"] = "start_date must be in YYYY-MM-DD format"
+	}
+
+	if _, err := time.Parse("2006-01-02", req.EndDate); err != nil {
+		errors["end_date"] = "end_date must be in YYYY-MM-DD format"
+	}
+
+	// EndTime is optional, but if provided validate it (HH:MM:SS)
+	if req.EndTime != "" {
+		if _, err := time.Parse("15:04", req.EndTime); err != nil {
+			errors["end_time"] = "end_time must be in HH:MM format"
+		}
+	}
+
+	if req.TotalAmount <= 0 {
+		errors["total_amount"] = "total_amount must be greater than zero"
 	}
 
 	return errors

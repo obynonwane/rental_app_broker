@@ -70,6 +70,9 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/inventory/reply-user-rating", app.ReplyUserRating)
 	mux.Post("/api/v1/inventory/search", app.SearchInventory)
 
+	//Booking routes---------------------------------------------------//
+	mux.Post("/api/v1/booking/create-booking", app.CreateBooking)
+
 	//Elastic search routes---------------------------------------------------//
 	// mux.Get("/api/v1/elastic-search/getusers", app.EGetUsers)
 	// mux.Get("/api/v1/elastic-search/inventory", app.SearchInventory)

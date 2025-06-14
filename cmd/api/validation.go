@@ -275,6 +275,28 @@ func (app *Config) ValidateBookingInput(req CreateBookingPayload) map[string]str
 	return errors
 }
 
+func (app *Config) ValidatePuchaseOrderInput(req CreatePrurchaseOrderPayload) map[string]string {
+	errors := map[string]string{}
+
+	if len(req.InventoryId) == 0 {
+		errors["inventory_id"] = "inventory_id is required"
+	}
+
+	if req.OfferPricePerUnit <= 0 {
+		errors["offer_price_per_unit"] = "offer_price_per_unit must be greater than zero"
+	}
+
+	if req.Quantity <= 0 {
+		errors["quantity"] = "quantity must be greater than zero"
+	}
+
+	if req.TotalAmount <= 0 {
+		errors["total_amount"] = "total_amount must be greater than zero"
+	}
+
+	return errors
+}
+
 type ProductPurpose string
 type AvailabilityStatus string
 type RentalDuration string

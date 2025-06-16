@@ -86,9 +86,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -231,13 +235,172 @@ func (app *Config) saveToDatabase(msg Message) {
 	}
 
 	go app.pushEventViaRabbit(data)
-
-	// Example using PostgreSQL or MongoDB goes here
-	// err := db.Insert(msg)
-	// if err != nil {
-	//     log.Printf("[DB ERROR] Failed to save message: %v", err)
-	// }
 }
+
+func (app *Config) GetChatHistory(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+	userA := queryParams.Get("userA")
+	userB := queryParams.Get("userB")
+	
+
+	// Verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	// Define the payload structure
+	type ChatHistoryRequest struct {
+		UserA string `json:"userA"`
+		UserB string `json:"userB"`
+	}
+
+	requestPayload := ChatHistoryRequest{
+		UserA: userA,
+		UserB: userB,
+	}
+
+	// Marshal request payload to JSON
+	jsonData, err := json.Marshal(requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Construct inventory service URL
+	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "chat-history")
+
+	// Create POST request with JSON body
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+
+	// Execute the HTTP request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// Read and decode the response
+	var jsonFromService jsonResponse
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	// Relay the response
+	payload := jsonResponse{
+		Error:      jsonFromService.Error,
+		StatusCode: jsonFromService.StatusCode,
+		Message:    jsonFromService.Message,
+		Data:       jsonFromService.Data,
+	}
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) GetChatList(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+	userID := queryParams.Get("userId")
+
+	// Verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	// Define the payload structure
+
+	type ChatListRequest struct {
+		UserID string `json:"user_id"`
+	}
+
+	requestPayload := ChatListRequest{
+		UserID: userID,
+	}
+
+	// Marshal request payload to JSON
+	jsonData, err := json.Marshal(requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Construct inventory service URL
+	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "chat-list")
+
+	// Create POST request with JSON body
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+
+	// Execute the HTTP request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// Read and decode the response
+	var jsonFromService jsonResponse
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	// Relay the response
+	payload := jsonResponse{
+		Error:      jsonFromService.Error,
+		StatusCode: jsonFromService.StatusCode,
+		Message:    jsonFromService.Message,
+		Data:       jsonFromService.Data,
+	}
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+//==============================================================================================================================================//
 
 // pushEventViaRabbit logs an event using the logger-service. It makes the call by pushing the data to RabbitMQ.
 func (app *Config) pushEventViaRabbit(l RabbitMQPayload) {

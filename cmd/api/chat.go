@@ -1,88 +1,3 @@
-// package main
-
-// import (
-// 	"log"
-// 	"net/http"
-// 	"sync"
-// 	"time"
-
-// 	"github.com/gorilla/websocket"
-// )
-
-// var upgrader = websocket.Upgrader{
-// 	ReadBufferSize:  1024,
-// 	WriteBufferSize: 1024,
-// 	CheckOrigin: func(r *http.Request) bool {
-// 		return true
-// 	},
-// }
-
-// type Message struct {
-// 	Content  string `json:"content"`
-// 	Sender   string `json:"sender"`
-// 	Receiver string `json:"receiver"`
-// 	SentAt   int64  `json:"sent_at"` // unix millis
-// }
-
-// var clients = make(map[*websocket.Conn]bool)
-// var broadcast = make(chan Message, 128)
-
-// func handleMessage() {
-// 	for {
-// 		msg := <-broadcast // Receive a new message from any client
-
-// 		log.Printf("[BROADCAST] %s: %s: %s", msg.Sender, msg.Receiver, msg.Content)
-
-// 		// Save to Redis list
-// 		// err := app.cache.RPush(context.Background(), "chat:messages", fmt.Sprintf("%s: %s", msg.User, msg.Content)).Err()
-// 		// if err != nil {
-// 		// 	log.Printf("Error saving message to Redis: %v", err)
-// 		// }
-
-// 		for client := range clients {
-// 			go func(c *websocket.Conn) {
-// 				if err := c.WriteJSON(msg); err != nil {
-// 					c.Close()
-// 					delete(clients, c)
-// 				}
-// 			}(client)
-// 		}
-// 	}
-// }
-
-// func (app *Config) ChatHandler(w http.ResponseWriter, r *http.Request) {
-// 	conn, err := upgrader.Upgrade(w, r, nil)
-// 	if err != nil {
-// 		log.Printf("upgrade failed: %v", err)
-// 		return
-// 	}
-
-// 	clients[conn] = true
-
-// 	// Keep‑alive pings
-// 	go func(c *websocket.Conn) {
-// 		ticker := time.NewTicker(15 * time.Second)
-// 		defer ticker.Stop()
-// 		for range ticker.C {
-// 			if err := c.WriteMessage(websocket.PingMessage, nil); err != nil {
-// 				c.Close()
-// 				delete(clients, c)
-// 				return
-// 			}
-// 		}
-// 	}(conn)
-
-// 	for {
-// 		var msg Message
-// 		if err := conn.ReadJSON(&msg); err != nil {
-// 			delete(clients, conn)
-// 			break
-// 		}
-// 		msg.SentAt = time.Now().UnixMilli()
-// 		broadcast <- msg
-// 	}
-// }
-
 package main
 
 import (
@@ -241,7 +156,6 @@ func (app *Config) GetChatHistory(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	userA := queryParams.Get("userA")
 	userB := queryParams.Get("userB")
-	
 
 	// Verify the user token
 	user, err := app.getToken(r)

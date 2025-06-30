@@ -78,6 +78,8 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/chat/ws", app.ChatHandler)
 	mux.Get("/api/v1/chat/chat-history", app.GetChatHistory)
 	mux.Get("/api/v1/chat/chat-list", app.GetChatList)
+	mux.Get("/api/v1/chat/unread-chat", app.GetUnreadChat)
+	mux.Get("/api/v1/chat/mark-chat-as-read", app.MarkChatAsRead)
 
 	//Elastic search routes---------------------------------------------------//
 	// mux.Get("/api/v1/elastic-search/getusers", app.EGetUsers)

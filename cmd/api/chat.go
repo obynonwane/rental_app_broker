@@ -26,6 +26,7 @@ type RabbitMQPayload struct {
 type Message struct {
 	Content  string `json:"content"`
 	Sender   string `json:"sender"`
+	ReplyTo  string `json:"reply_to"`
 	Receiver string `json:"receiver"`
 	SentAt   int64  `json:"sent_at"`
 }
@@ -105,7 +106,7 @@ func keepAlive(conn *websocket.Conn, userID string) {
 // handleMessages routes messages to the intended receiver
 func (app *Config) HandleMessages() {
 	for msg := range broadcast {
-		log.Printf("[MESSAGE] %s → %s: %s", msg.Sender, msg.Receiver, msg.Content)
+		log.Printf("[MESSAGE] %s → %s: %s -> %s", msg.Sender, msg.Receiver, msg.Content, msg.ReplyTo)
 
 		app.saveToDatabase(msg)
 

@@ -72,6 +72,9 @@ type BusinessKycPayload struct {
 	AddressState       string `json:"address_state"`
 	AddressLga         string `json:"address_lga"`
 	AddressStreet      string `json:"address_street"`
+	Description        string `json:"description"`
+	KeyBonus           string `json:"key_bonus"`
+	Subdomain           string `json:"subdomain"`
 }
 
 type LogPayload struct {
@@ -3126,8 +3129,8 @@ func (app *Config) IndexInventory(w http.ResponseWriter, r *http.Request) {
 // 4. Renters staff relationship (table renters_staff (renter_id, user_id, )) - done
 // 5. Extract the user who added you
 
-// Ask user if they have company
-// if the company is registered or not
-// Ask for CAC number if registered
+// Ask user if they have company - done
+// if the company is registered or not - done
+// Ask for CAC number if registered - done
 // Ask company phone number
-// Ask Company address (state & LGA)
+// Ask Company address (state & LGA) - done

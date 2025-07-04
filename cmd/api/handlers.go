@@ -75,6 +75,7 @@ type BusinessKycPayload struct {
 	Description        string `json:"description"`
 	KeyBonus           string `json:"key_bonus"`
 	Subdomain          string `json:"subdomain"`
+	Industries         string `json:"industries"`
 }
 
 type LogPayload struct {

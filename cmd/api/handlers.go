@@ -74,7 +74,8 @@ type BusinessKycPayload struct {
 	AddressStreet      string `json:"address_street"`
 	Description        string `json:"description"`
 	KeyBonus           string `json:"key_bonus"`
-	Subdomain           string `json:"subdomain"`
+	Subdomain          string `json:"subdomain"`
+	Industries         string `json:"industries"`
 }
 
 type LogPayload struct {
@@ -1224,6 +1225,61 @@ func (app *Config) RetriveIdentificationTypes(w http.ResponseWriter, r *http.Req
 
 	// contruct the url
 	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "retrieve-identification-types")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", authServiceUrl, nil)
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	// check for error
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+
+}
+func (app *Config) RetriveIndustries(w http.ResponseWriter, r *http.Request) {
+
+	// retrieve authorization token
+	authorizationHeader := r.Header.Get("Authorization")
+
+	// contruct the url
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "retrieve-industries")
 
 	// call the service by creating a request
 	request, err := http.NewRequest("GET", authServiceUrl, nil)

@@ -268,6 +268,13 @@ func (app *Config) ValidateBookingInput(req CreateBookingPayload) map[string]str
 		}
 	}
 
+	// EndTime is optional, but if provided validate it (HH:MM:SS)
+	if req.StartTime != "" {
+		if _, err := time.Parse("15:04", req.EndTime); err != nil {
+			errors["start_time"] = "start_time must be in HH:MM format"
+		}
+	}
+
 	if req.TotalAmount <= 0 {
 		errors["total_amount"] = "total_amount must be greater than zero"
 	}

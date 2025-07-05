@@ -1615,6 +1615,9 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 	tags := r.FormValue("tags")
 	metadata := r.FormValue("metadata")
 	negotiable := NegotiableStatus(r.FormValue("negotiable"))
+	condition := r.FormValue("condition")
+	usage_guide := r.FormValue("usage_guide")
+	included := r.FormValue("included")
 	//================================================================================================================================
 
 	// check the inputs
@@ -1788,6 +1791,9 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		Negotiable:      string(negotiable),
 		PrimaryImage:    primaryImage,
 		MinimumPrice:    minimum_price,
+		Condition:       condition,
+		UsageGuide:      usage_guide,
+		Included:        included,
 	})
 
 	if err != nil {

@@ -20,10 +20,10 @@ type CreateBookingPayload struct {
 	OfferPricePerUnit float64 `json:"offer_price_per_unit" binding:"required"`
 	Quantity          float64 `json:"quantity" binding:"required"`
 
-	StartDate string `json:"start_date" binding:"required"` // e.g., "2025-06-15"
-	EndDate   string `json:"end_date" binding:"required"`   // e.g., "2025-06-15"
-	EndTime   string `json:"end_time"`                      // e.g., "18:00:00", optional for daily+ rentals
-
+	StartDate   string  `json:"start_date" binding:"required"` // e.g., "2025-06-15"
+	EndDate     string  `json:"end_date" binding:"required"`   // e.g., "2025-06-15"
+	EndTime     string  `json:"end_time" binding:"required"`   // e.g., "18:00:00", optional for daily+ rentals
+	StartTime   string  `json:"start_time" binding:"required"` // e.g., "18:00:00", optional for daily+ rentals
 	TotalAmount float64 `json:"total_amount" binding:"required"`
 }
 
@@ -44,12 +44,14 @@ func (app *Config) CreateBooking(w http.ResponseWriter, r *http.Request) {
 	//extract the request body
 	var requestPayload CreateBookingPayload
 
-	//extract the requestbody
+	//extract the request body
 	err = app.readJSON(w, r, &requestPayload)
 	if err != nil {
 		app.errorJSON(w, err, nil)
 		return
 	}
+
+	log.Println(requestPayload, "THE payload")
 
 	// Validate the request payload
 	if err := app.ValidateBookingInput(requestPayload); len(err) > 0 {

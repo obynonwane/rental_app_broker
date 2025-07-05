@@ -83,6 +83,10 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/chat/unread-chat", app.GetUnreadChat)
 	mux.Get("/api/v1/chat/mark-chat-as-read", app.MarkChatAsRead)
 
+	// Profile routes-----------------------------------------------//
+	mux.Post("/api/v1/authentication/profile-image", app.UploadProfileImage)
+	mux.Post("/api/v1/authentication/shop-banner", app.UploadBanner)
+
 	//Elastic search routes---------------------------------------------------//
 	// mux.Get("/api/v1/elastic-search/getusers", app.EGetUsers)
 	// mux.Get("/api/v1/elastic-search/inventory", app.SearchInventory)

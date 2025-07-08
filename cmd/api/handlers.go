@@ -1873,7 +1873,7 @@ func (app *Config) AllCategories(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	c := inventory.NewInventoryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second) // Increased timeout
 	defer cancel()
 
 	// channel to receive response from go routince

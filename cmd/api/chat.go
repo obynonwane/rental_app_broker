@@ -24,11 +24,12 @@ type RabbitMQPayload struct {
 
 // Message struct defines the message payload
 type Message struct {
-	Content  string `json:"content"`
-	Sender   string `json:"sender"`
-	ReplyTo  string `json:"reply_to"`
-	Receiver string `json:"receiver"`
-	SentAt   int64  `json:"sent_at"`
+	Content      string `json:"content"`
+	Sender       string `json:"sender"`
+	ReplyTo      string `json:"reply_to"`
+	Receiver     string `json:"receiver"`
+	SentAt       int64  `json:"sent_at"`
+	Content_Type string `json:"content_type"`
 }
 
 // Map of userID to websocket.Conn

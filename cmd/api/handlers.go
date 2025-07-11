@@ -11,7 +11,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/rpc"
-	"net/url"
 	"os"
 	"reflect"
 	"strconv"
@@ -3043,146 +3042,146 @@ func (app *Config) RequestVerificationEmail(w http.ResponseWriter, r *http.Reque
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
-func (app *Config) EGetUsers(w http.ResponseWriter, r *http.Request) {
+// func (app *Config) EGetUsers(w http.ResponseWriter, r *http.Request) {
 
-	response, err := app.getToken(r)
-	if err != nil {
-		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
-		return
-	}
+// 	response, err := app.getToken(r)
+// 	if err != nil {
+// 		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
+// 		return
+// 	}
 
-	if response.Error {
-		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
-		return
-	}
+// 	if response.Error {
+// 		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
+// 		return
+// 	}
 
-	app.EproceedGetUser(w)
-}
+// 	app.EproceedGetUser(w)
+// }
 
-func (app *Config) EproceedGetUser(w http.ResponseWriter) {
+// func (app *Config) EproceedGetUser(w http.ResponseWriter) {
 
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("ELASTIC_SEARCH_SERVICE_URL"), "getusers")
-	log.Println("The endpoint:", authServiceUrl)
+// 	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("ELASTIC_SEARCH_SERVICE_URL"), "getusers")
+// 	log.Println("The endpoint:", authServiceUrl)
 
-	// Call the service by creating a request
-	request, err := http.NewRequest("GET", authServiceUrl, nil)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
+// 	// Call the service by creating a request
+// 	request, err := http.NewRequest("GET", authServiceUrl, nil)
+// 	if err != nil {
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
 
-	// Set the Content-Type header
-	request.Header.Set("Content-Type", "application/json")
+// 	// Set the Content-Type header
+// 	request.Header.Set("Content-Type", "application/json")
 
-	// Create an HTTP client
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Println(err)
-		app.errorJSON(w, err, nil)
-		return
-	}
-	defer response.Body.Close()
+// 	// Create an HTTP client
+// 	client := &http.Client{}
+// 	response, err := client.Do(request)
+// 	if err != nil {
+// 		log.Println(err)
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
+// 	defer response.Body.Close()
 
-	// Create a variable to read response.Body into
-	var jsonFromService jsonResponse
+// 	// Create a variable to read response.Body into
+// 	var jsonFromService jsonResponse
 
-	// Decode the JSON from the service
-	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
+// 	// Decode the JSON from the service
+// 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+// 	if err != nil {
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
 
-	// Check if the status code is Accepted
-	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("unexpected status code received from service"), nil, response.StatusCode)
-		return
-	}
+// 	// Check if the status code is Accepted
+// 	if response.StatusCode != http.StatusAccepted {
+// 		app.errorJSON(w, errors.New("unexpected status code received from service"), nil, response.StatusCode)
+// 		return
+// 	}
 
-	// Prepare the payload
-	var payload jsonResponse
-	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
-	payload.Message = jsonFromService.Message
-	payload.Data = jsonFromService.Data
+// 	// Prepare the payload
+// 	var payload jsonResponse
+// 	payload.Error = jsonFromService.Error
+// 	payload.StatusCode = http.StatusOK
+// 	payload.Message = jsonFromService.Message
+// 	payload.Data = jsonFromService.Data
 
-	// Write the JSON response
-	app.writeJSON(w, http.StatusOK, payload)
-}
+// 	// Write the JSON response
+// 	app.writeJSON(w, http.StatusOK, payload)
+// }
 
-func (app *Config) IndexInventory(w http.ResponseWriter, r *http.Request) {
+// func (app *Config) IndexInventory(w http.ResponseWriter, r *http.Request) {
 
-	//extract the request body
-	var requestPayload IndexInventoryPayload
+// 	//extract the request body
+// 	var requestPayload IndexInventoryPayload
 
-	//extract the requestbody
-	err := app.readJSON(w, r, &requestPayload)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
+// 	//extract the requestbody
+// 	err := app.readJSON(w, r, &requestPayload)
+// 	if err != nil {
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
 
-	// Construct query parameters for Elasticsearch
-	elasticQueryParams := url.Values{}
-	elasticQueryParams.Set("id", requestPayload.Id)
+// 	// Construct query parameters for Elasticsearch
+// 	elasticQueryParams := url.Values{}
+// 	elasticQueryParams.Set("id", requestPayload.Id)
 
-	// Build the full Elasticsearch service URL with query parameters
-	elasticServiceUrl := fmt.Sprintf("%s%s?%s",
-		os.Getenv("ELASTIC_SEARCH_SERVICE_URL"),
-		"inventory/index",
-		elasticQueryParams.Encode(),
-	)
+// 	// Build the full Elasticsearch service URL with query parameters
+// 	elasticServiceUrl := fmt.Sprintf("%s%s?%s",
+// 		os.Getenv("ELASTIC_SEARCH_SERVICE_URL"),
+// 		"inventory/index",
+// 		elasticQueryParams.Encode(),
+// 	)
 
-	// call the service by creating a request
-	request, err := http.NewRequest("GET", elasticServiceUrl, nil)
+// 	// call the service by creating a request
+// 	request, err := http.NewRequest("GET", elasticServiceUrl, nil)
 
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
+// 	if err != nil {
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
 
-	if err != nil {
-		log.Println(err)
-		app.errorJSON(w, err, nil)
-		return
-	}
+// 	if err != nil {
+// 		log.Println(err)
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
 
-	// Set the Content-Type header
-	request.Header.Set("Content-Type", "application/json")
-	//create a http client
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Println(err)
-		app.errorJSON(w, err, nil)
-		return
-	}
-	defer response.Body.Close()
+// 	// Set the Content-Type header
+// 	request.Header.Set("Content-Type", "application/json")
+// 	//create a http client
+// 	client := &http.Client{}
+// 	response, err := client.Do(request)
+// 	if err != nil {
+// 		log.Println(err)
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
+// 	defer response.Body.Close()
 
-	// create a varabiel we'll read response.Body into
-	var jsonFromService jsonResponse
+// 	// create a varabiel we'll read response.Body into
+// 	var jsonFromService jsonResponse
 
-	// decode the json from the auth service
-	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
+// 	// decode the json from the auth service
+// 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+// 	if err != nil {
+// 		app.errorJSON(w, err, nil)
+// 		return
+// 	}
 
-	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
-		return
-	}
+// 	if response.StatusCode != http.StatusAccepted {
+// 		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+// 		return
+// 	}
 
-	var payload jsonResponse
-	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
-	payload.Message = jsonFromService.Message
-	payload.Data = jsonFromService.Data
+// 	var payload jsonResponse
+// 	payload.Error = jsonFromService.Error
+// 	payload.StatusCode = http.StatusOK
+// 	payload.Message = jsonFromService.Message
+// 	payload.Data = jsonFromService.Data
 
-	app.writeJSON(w, http.StatusOK, payload)
-}
+// 	app.writeJSON(w, http.StatusOK, payload)
+// }
 
 type SavedInventoryPayload struct {
 	UserId      string `json:"user_id"`

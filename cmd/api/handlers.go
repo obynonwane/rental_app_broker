@@ -109,6 +109,8 @@ type SearchPayload struct {
 	LgaSlug         string `json:"lga_slug"`
 	CategorySlug    string `json:"category_slug"`
 	SubcategorySlug string `json:"subcategory_slug"`
+	UserID          string `json:"user_id"`
+	ProductPurpose  string `json:"product_purpose"`
 }
 
 type GetCategoryByIDPayload struct {
@@ -2724,7 +2726,7 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 	resultCh := make(chan *inventory.InventoryCollection, 1)
 	errorChannel := make(chan error, 1)
 
-	go func(state_id, country_id, lga_id, text, limit, offset, category_id, subcategory_id, ulid, state_slug, country_slug, lga_slug, category_slug, subcategory_slug string) {
+	go func(state_id, country_id, lga_id, text, limit, offset, category_id, subcategory_id, ulid, state_slug, country_slug, lga_slug, category_slug, subcategory_slug, user_id, product_purpose string) {
 		// make the call via grpc
 		result, err := c.SearchInventory(ctx, &inventory.SearchInventoryRequest{
 			StateId:         state_id,
@@ -2741,6 +2743,8 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 			LgaSlug:         lga_slug,
 			CategorySlug:    category_slug,
 			SubcategorySlug: subcategory_slug,
+			UserId:          user_id,
+			ProductPurpose:  product_purpose,
 		})
 		if err != nil {
 			errorChannel <- err
@@ -2762,6 +2766,8 @@ func (app *Config) SearchInventory(w http.ResponseWriter, r *http.Request) {
 		requestPayload.LgaSlug,
 		requestPayload.CategorySlug,
 		requestPayload.SubcategorySlug,
+		requestPayload.UserID,
+		requestPayload.ProductPurpose,
 	)
 
 	// 7. select statement to wait

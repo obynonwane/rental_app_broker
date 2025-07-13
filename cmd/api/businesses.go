@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,13 +10,32 @@ import (
 	"os"
 )
 
+type SearchPremiumPartnerPayload struct {
+	Text     string `json:"text"`
+	Industry string `json:"industry"`
+	Limit    string `json:"limit"`
+	Offset   string `json:"offset"`
+}
+
 func (app *Config) PremiumPartner(w http.ResponseWriter, r *http.Request) {
+
+	var requestPayload SearchPremiumPartnerPayload
+
+	//2. extract the requestbody
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
 
 	// Construct inventory service URL
 	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "premium-partners")
 
 	// Create POST request with JSON body
-	request, err := http.NewRequest("GET", invServiceUrl, nil)
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
 		log.Println(err)
 		app.errorJSON(w, err, nil)

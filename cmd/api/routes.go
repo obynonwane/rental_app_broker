@@ -53,7 +53,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/", app.Subscription)
 
 	mux.Post("/api/v1/send-email", app.TestEmail)
-
+ 
 	//Inventory routes---------------------------------------------------//
 	mux.Get("/api/v1/inventory/getusers", app.GetUsers)
 	mux.Post("/api/v1/inventory/create-inventory", app.CreateInventory)

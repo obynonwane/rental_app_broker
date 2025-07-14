@@ -1963,7 +1963,7 @@ func (app *Config) AllSubcategories(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error: gRPC request timed out")
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 
-	}
+	} 
 
 }
 func (app *Config) GetCategorySubcategories(w http.ResponseWriter, r *http.Request) {

@@ -86,6 +86,7 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/chat/chat-list", app.GetChatList)
 	mux.Get("/api/v1/chat/unread-chat", app.GetUnreadChat)
 	mux.Get("/api/v1/chat/mark-chat-as-read", app.MarkChatAsRead)
+	mux.Post("/api/v1/chat/delete-chat", app.DeleteChat)
 
 	// Profile routes-----------------------------------------------//
 	mux.Post("/api/v1/authentication/profile-image", app.UploadProfileImage)

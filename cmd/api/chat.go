@@ -484,6 +484,88 @@ func (app *Config) MarkChatAsRead(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+type DeleteChatPayload struct {
+	ID     string `json:"id" binding:"required"`
+	UserId string `json:"user_id"`
+}
+
+func (app *Config) DeleteChat(w http.ResponseWriter, r *http.Request) {
+
+	// verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	//extract the request body
+	var requestPayload DeleteChatPayload
+
+	//extract the request body
+	err = app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	userId := user.Data.(map[string]interface{})["user"].(map[string]interface{})["id"].(string)
+	requestPayload.UserId = userId
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "delete-chat")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
 //==============================================================================================================================================//
 
 // pushEventViaRabbit logs an event using the logger-service. It makes the call by pushing the data to RabbitMQ.

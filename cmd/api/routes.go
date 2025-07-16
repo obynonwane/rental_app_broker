@@ -53,7 +53,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/", app.Subscription)
 
 	mux.Post("/api/v1/send-email", app.TestEmail)
- 
+
 	//Inventory routes---------------------------------------------------//
 	mux.Get("/api/v1/inventory/getusers", app.GetUsers)
 	mux.Post("/api/v1/inventory/create-inventory", app.CreateInventory)
@@ -74,6 +74,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/inventory/save-inventory", app.SaveInventory)
 	mux.Post("/api/v1/inventory/delete-inventory", app.DeleteSaveInventory)
 	mux.Get("/api/v1/inventory/user-saved-inventory", app.GetUserSavedInventory)
+	mux.Get("/api/v1/inventory/premium-extras", app.GetPremiumUsersExtras)
 
 	//Booking routes---------------------------------------------------//
 	mux.Post("/api/v1/booking/create-booking", app.CreateBooking)

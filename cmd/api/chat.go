@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/obynonwane/broker-service/event"
 )
@@ -30,6 +31,7 @@ type Message struct {
 	Receiver     string `json:"receiver"`
 	SentAt       int64  `json:"sent_at"`
 	Content_Type string `json:"content_type"`
+	MessageID    string `json:"message_id"`
 }
 
 // Map of userID to websocket.Conn
@@ -44,6 +46,10 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // allow all origins for testing
 	},
+}
+
+func GenerateUUID() string {
+	return uuid.NewString()
 }
 
 // Main entry point
@@ -81,6 +87,7 @@ func (app *Config) ChatHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		msg.SentAt = time.Now().UnixMilli()
+		msg.MessageID = GenerateUUID()
 		broadcast <- msg
 	}
 
@@ -107,9 +114,11 @@ func keepAlive(conn *websocket.Conn, userID string) {
 // handleMessages routes messages to the intended receiver
 func (app *Config) HandleMessages() {
 	for msg := range broadcast {
-		log.Printf("[MESSAGE] %s → %s: %s -> %s", msg.Sender, msg.Receiver, msg.Content, msg.ReplyTo)
+		log.Printf("[MESSAGE] %s → %s: %s -> %s -> %s", msg.Sender, msg.Receiver, msg.Content, msg.ReplyTo, msg.MessageID)
 
 		app.saveToDatabase(msg)
+
+		log.Println("MESSAGE TO BE SENT TO RECEIVER =====================", msg)
 
 		// Send to receiver
 		clientsMu.Lock()
@@ -137,8 +146,10 @@ func safeSend(conn *websocket.Conn, msg Message) {
 }
 
 func (app *Config) saveToDatabase(msg Message) {
+
+	log.Println("MESSAGE TO BE SENT TO DB =====================", msg)
 	// Example: log to console
-	log.Printf("[DB SAVE] From %s to %s at %d: %s", msg.Sender, msg.Receiver, msg.SentAt, msg.Content)
+	log.Printf("[DB SAVE] From %s to %s at %d: %s %s", msg.Sender, msg.Receiver, msg.SentAt, msg.Content, msg.MessageID)
 
 	rawData, err := json.Marshal(msg)
 	if err != nil {

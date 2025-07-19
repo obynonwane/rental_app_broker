@@ -65,6 +65,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/inventory/rating", app.RateInventory)
 	mux.Post("/api/v1/inventory/rating-user", app.RateUser)
 	mux.Get("/api/v1/inventory/inventory-detail", app.GetInventoryDetail)
+	mux.Get("/api/v1/inventory/user-detail", app.GetUserDetail)
 	mux.Get("/api/v1/inventory/user-rating/{id}", app.GetUserRatings)
 	mux.Get("/api/v1/inventory/inventory-rating/{id}", app.GetInventoryRatings)
 	mux.Post("/api/v1/inventory/reply-inventory-rating", app.ReplyInventoryRating)

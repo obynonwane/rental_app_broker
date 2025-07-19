@@ -1963,7 +1963,7 @@ func (app *Config) AllSubcategories(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error: gRPC request timed out")
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 
-	} 
+	}
 
 }
 func (app *Config) GetCategorySubcategories(w http.ResponseWriter, r *http.Request) {
@@ -2285,6 +2285,57 @@ func (app *Config) RateUser(w http.ResponseWriter, r *http.Request) {
 		log.Println("Error: gRPC request timed out")
 		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
 	}
+}
+
+func (app *Config) GetUserDetail(w http.ResponseWriter, r *http.Request) {
+	user_slug := r.FormValue("user_slug")
+
+	// construct the url
+	invServiceUrl := fmt.Sprintf("%suser-detail?user_slug=%s", os.Getenv("INVENTORY_SERVICE_URL"), user_slug)
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", invServiceUrl, nil)
+
+	// check for error
+	if err != nil {
+		log.Println(err, "1")
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a variable we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
 }
 
 func (app *Config) GetInventoryDetail(w http.ResponseWriter, r *http.Request) {

@@ -118,7 +118,6 @@ func (app *Config) HandleMessages() {
 
 		app.saveToDatabase(msg)
 
-		log.Println("MESSAGE TO BE SENT TO RECEIVER =====================", msg)
 
 		// Send to receiver
 		clientsMu.Lock()
@@ -147,7 +146,6 @@ func safeSend(conn *websocket.Conn, msg Message) {
 
 func (app *Config) saveToDatabase(msg Message) {
 
-	log.Println("MESSAGE TO BE SENT TO DB =====================", msg)
 	// Example: log to console
 	log.Printf("[DB SAVE] From %s to %s at %d: %s %s", msg.Sender, msg.Receiver, msg.SentAt, msg.Content, msg.MessageID)
 

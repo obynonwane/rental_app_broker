@@ -2204,6 +2204,112 @@ func (app *Config) RateInventory(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (app *Config) GetInventoryRatingReplies(w http.ResponseWriter, r *http.Request) {
+
+	queryParams := r.URL.Query()
+	rating_id := queryParams.Get("rating_id")
+
+	// construct the url
+	invServiceUrl := fmt.Sprintf("%sinventory-rating-replies?rating_id=%s", os.Getenv("INVENTORY_SERVICE_URL"), rating_id)
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", invServiceUrl, nil)
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) GetUserRatingReplies(w http.ResponseWriter, r *http.Request) {
+
+	queryParams := r.URL.Query()
+	rating_id := queryParams.Get("rating_id")
+
+	// construct the url
+	invServiceUrl := fmt.Sprintf("%suser-rating-replies?rating_id=%s", os.Getenv("INVENTORY_SERVICE_URL"), rating_id)
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", invServiceUrl, nil)
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
 func (app *Config) RateUser(w http.ResponseWriter, r *http.Request) {
 	// extract the request params
 	queryParams := r.URL.Query()

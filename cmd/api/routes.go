@@ -77,6 +77,9 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/inventory/user-saved-inventory", app.GetUserSavedInventory)
 	mux.Get("/api/v1/inventory/premium-extras", app.GetPremiumUsersExtras)
 
+	mux.Get("/api/v1/inventory/inventory-rating-replies", app.GetInventoryRatingReplies)
+	mux.Get("/api/v1/inventory/user-rating-replies", app.GetUserRatingReplies)
+
 	//Booking routes---------------------------------------------------//
 	mux.Post("/api/v1/booking/create-booking", app.CreateBooking)
 	mux.Post("/api/v1/purchase/create-order", app.CreatePrurchaseOrder)

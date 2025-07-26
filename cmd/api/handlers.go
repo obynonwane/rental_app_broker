@@ -1674,6 +1674,17 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		kyc, ok := dataMap["kyc_detail"].(map[string]any)
+		if !ok {
+			app.errorJSON(w, errors.New("missing kyc user can not create inventory"), nil)
+			return
+		}
+
+		if kyc["business_kyc"] == nil && kyc["renter_kyc"] == nil {
+			app.errorJSON(w, errors.New("missing kyc user can not create inventory"), nil)
+			return
+		}
+
 	}
 
 	err = r.ParseMultipartForm(20 << 20)

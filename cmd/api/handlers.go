@@ -77,6 +77,10 @@ type BusinessKycPayload struct {
 	Industries         string `json:"industries"`
 }
 
+type SubdomainExistPayload struct {
+	Subdomain string `json:"subdomain"`
+}
+
 type LogPayload struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
@@ -1387,6 +1391,40 @@ func (app *Config) ListUserTypes(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (app *Config) checkSubdomainExist(ctx context.Context, payload SubdomainExistPayload) (*jsonResponse, error) {
+	// Marshal the payload
+	jsonData, _ := json.MarshalIndent(payload, "", "\t")
+
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "subdomain-exist")
+
+	// Create the request
+	req, err := http.NewRequestWithContext(ctx, "POST", authServiceUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result jsonResponse
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusAccepted {
+		return nil, fmt.Errorf(result.Message)
+	}
+
+	return &result, nil
+}
+
 func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
 
 	//extract the request body
@@ -1399,10 +1437,86 @@ func (app *Config) KycBusiness(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check if subdomain exist
+	subDExist := SubdomainExistPayload{
+		Subdomain: requestPayload.Subdomain,
+	}
+	_, err = app.checkSubdomainExist(r.Context(), subDExist)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
 	//create some json we will send to authservice
 	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
 
 	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "kyc-business")
+
+	//get authorization hearder
+	authorizationHeader := r.Header.Get("Authorization")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
+
+	// Set the "Authorization" header with your Bearer token
+	request.Header.Set("authorization", authorizationHeader)
+
+	if err != nil {
+		log.Println("error 1")
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+func (app *Config) SubdomainExist(w http.ResponseWriter, r *http.Request) {
+
+	//extract the request body
+	var requestPayload SubdomainExistPayload
+
+	//extract the requestbody
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("AUTH_URL"), "subdomain-exist")
 
 	//get authorization hearder
 	authorizationHeader := r.Header.Get("Authorization")

@@ -80,6 +80,8 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/inventory/inventory-rating-replies", app.GetInventoryRatingReplies)
 	mux.Get("/api/v1/inventory/user-rating-replies", app.GetUserRatingReplies)
 
+	mux.Get("/api/v1/business/details", app.GetBusinessDetail)
+
 	//Booking routes---------------------------------------------------//
 	mux.Post("/api/v1/booking/create-booking", app.CreateBooking)
 	mux.Post("/api/v1/purchase/create-order", app.CreatePrurchaseOrder)

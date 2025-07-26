@@ -2445,6 +2445,59 @@ func (app *Config) GetUserDetail(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+func (app *Config) GetBusinessDetail(w http.ResponseWriter, r *http.Request) {
+	domain := r.FormValue("domain")
+
+	log.Println(domain, "THE DOMAIN IS HERE")
+
+	// construct the url
+	invServiceUrl := fmt.Sprintf("%sbusiness-details?domain=%s", os.Getenv("INVENTORY_SERVICE_URL"), domain)
+
+	// call the service by creating a request
+	request, err := http.NewRequest("GET", invServiceUrl, nil)
+
+	// check for error
+	if err != nil {
+		log.Println(err, "1")
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a variable we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = http.StatusOK
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
 func (app *Config) GetInventoryDetail(w http.ResponseWriter, r *http.Request) {
 
 	// 1. retrieve inventory id

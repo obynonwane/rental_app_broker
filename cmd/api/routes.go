@@ -107,5 +107,9 @@ func (app *Config) routes() http.Handler {
 	// Add the Prometheus metrics endpoint to the router-----------------//
 	mux.Handle("/metrics", promhttp.Handler())
 
+	// payment gateway
+	mux.Post("/api/v1/subscription/paystack-transaction-initialization", app.PaystackTransactionInitialization)
+	mux.Get("/api/v1/subscription/plans", app.GetPlans)
+
 	return mux
 }

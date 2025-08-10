@@ -111,6 +111,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/subscription/paystack-transaction-initialization", app.PaystackTransactionInitialization)
 	mux.Post("/api/v1/subscription/verify-paystack-transaction", app.VerifyPaystackTransaction)
 	mux.Get("/api/v1/subscription/cancel-subscription", app.CancelSubscription)
+	mux.Get("/api/v1/subscription/activate-subscription", app.ActivateSubscription)
 	mux.Get("/api/v1/subscription/subscription-history", app.GetSubscriptionHistory)
 	mux.Get("/api/v1/subscription/plans", app.GetPlans)
 

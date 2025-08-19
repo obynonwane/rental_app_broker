@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -98,6 +99,62 @@ func (app *Config) getToken(r *http.Request) (jsonResponse, error) {
 
 	// Set the "Authorization" header with your Bearer token
 	request.Header.Set("authorization", authorizationHeader)
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		return jsonResponse{Error: true, Message: err.Error(), StatusCode: http.StatusBadRequest, Data: nil}, err
+
+	}
+	defer response.Body.Close()
+
+	//variable to marshal into
+	var jsonFromService jsonResponse
+
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+
+	if err != nil {
+		return jsonResponse{Error: true, Message: err.Error(), StatusCode: http.StatusBadRequest, Data: nil}, err
+	}
+
+	// make a call to the bank-service
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.Message = jsonFromService.Message
+	payload.StatusCode = response.StatusCode
+	payload.Data = jsonFromService.Data
+
+	if jsonFromService.Error {
+		return payload, err
+	}
+
+	return payload, nil
+}
+
+type VerifyInventoryCreatingEligibilityPayload struct {
+	UserId string `json:"user_id"`
+}
+
+func (app *Config) verifyInventoryCreatingEligibility(r *http.Request, userId string) (jsonResponse, error) {
+
+	requestPayload := VerifyInventoryCreatingEligibilityPayload{
+		UserId: userId,
+	}
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	// call the service by creating a request
+
+	request, err := http.NewRequest("POST", os.Getenv("PAYMENT_SERVICE_URL")+"verify-inventory-posting-eligibility", bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		return jsonResponse{Error: true, Message: err.Error(), StatusCode: http.StatusBadRequest, Data: nil}, err
+
+	}
 
 	// Set the Content-Type header
 	request.Header.Set("Content-Type", "application/json")

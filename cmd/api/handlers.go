@@ -1808,6 +1808,14 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// check if the user still have available posting available
+	response, _ = app.verifyInventoryCreatingEligibility(r, userID)
+
+	if response.Error {
+		app.errorJSON(w, errors.New(response.Message), response.Data, http.StatusBadRequest)
+		return
+	}
+
 	//=========================================Working on  Image Array ===============================================================
 	var images []*inventory.ImageData
 

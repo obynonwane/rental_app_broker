@@ -74,7 +74,8 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/inventory/search", app.SearchInventory)
 	mux.Post("/api/v1/inventory/premium-partners", app.PremiumPartner)
 	mux.Post("/api/v1/inventory/save-inventory", app.SaveInventory)
-	mux.Post("/api/v1/inventory/delete-inventory", app.DeleteSaveInventory)
+	mux.Post("/api/v1/inventory/delete-saved-inventory", app.DeleteSaveInventory)
+	mux.Get("/api/v1/inventory/delete-inventory/{id}", app.DeleteInventory)
 	mux.Get("/api/v1/inventory/user-saved-inventory", app.GetUserSavedInventory)
 	mux.Get("/api/v1/inventory/premium-extras", app.GetPremiumUsersExtras)
 
@@ -89,6 +90,10 @@ func (app *Config) routes() http.Handler {
 
 	mux.Post("/api/v1/purchase/create-order", app.CreatePrurchaseOrder)
 	mux.Get("/api/v1/purchase/my-purchase", app.MyPurchase)
+
+	mux.Get("/api/v1/inventory/my-inventories", app.MyInventories)
+
+	mux.Get("/api/v1/subscription/my-subscription-history", app.MySubscriptionHistory)
 
 	//Chat  routes---------------------------------------------------//
 	mux.Get("/api/v1/chat/ws", app.ChatHandler)

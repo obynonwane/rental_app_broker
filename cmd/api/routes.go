@@ -71,6 +71,13 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/inventory/inventory-rating/{id}", app.GetInventoryRatings)
 	mux.Post("/api/v1/inventory/reply-inventory-rating", app.ReplyInventoryRating)
 	mux.Post("/api/v1/inventory/reply-user-rating", app.ReplyUserRating)
+
+	mux.Get("/api/v1/inventory/user-rating-helpful/{id}", app.UserRatingHepful)
+	mux.Get("/api/v1/inventory/report-user-rating/{id}", app.ReportUserRating)
+
+	mux.Get("/api/v1/inventory/inventory-rating-helpful/{id}", app.InventoryRatingHepful)
+	mux.Get("/api/v1/inventory/report-inventory-rating/{id}", app.ReportInventoryRating)
+
 	mux.Post("/api/v1/inventory/search", app.SearchInventory)
 	mux.Post("/api/v1/inventory/premium-partners", app.PremiumPartner)
 	mux.Post("/api/v1/inventory/save-inventory", app.SaveInventory)

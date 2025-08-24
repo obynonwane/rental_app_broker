@@ -3968,6 +3968,327 @@ func (app *Config) MyInventories(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type RatingReportHelpfulPayload struct {
+	UserId   string `json:"user_id"`
+	RatingId string `json:"rating_id" binding:"required"`
+}
+
+func (app *Config) ReportUserRating(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		app.errorJSON(w, errors.New("id parameter is missing"), nil)
+		return
+	}
+
+	// verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	userId := user.Data.(map[string]interface{})["user"].(map[string]interface{})["id"].(string)
+
+	//extract the request body
+	var requestPayload = RatingReportHelpfulPayload{
+		RatingId: id,
+		UserId:   userId,
+	}
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "report-user-rating")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+func (app *Config) UserRatingHepful(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		app.errorJSON(w, errors.New("id parameter is missing"), nil)
+		return
+	}
+
+	// verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	userId := user.Data.(map[string]interface{})["user"].(map[string]interface{})["id"].(string)
+
+	//extract the request body
+	var requestPayload = RatingReportHelpfulPayload{
+		RatingId: id,
+		UserId:   userId,
+	}
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "user-rating-helpful")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) InventoryRatingHepful(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		app.errorJSON(w, errors.New("id parameter is missing"), nil)
+		return
+	}
+
+	// verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	userId := user.Data.(map[string]interface{})["user"].(map[string]interface{})["id"].(string)
+
+	//extract the request body
+	var requestPayload = RatingReportHelpfulPayload{
+		RatingId: id,
+		UserId:   userId,
+	}
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "inventory-rating-helpful")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *Config) ReportInventoryRating(w http.ResponseWriter, r *http.Request) {
+
+	id := chi.URLParam(r, "id")
+
+	if id == "" {
+		app.errorJSON(w, errors.New("id parameter is missing"), nil)
+		return
+	}
+
+	// verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	userId := user.Data.(map[string]interface{})["user"].(map[string]interface{})["id"].(string)
+
+	//extract the request body
+	var requestPayload = RatingReportHelpfulPayload{
+		RatingId: id,
+		UserId:   userId,
+	}
+
+	//create some json we will send to authservice
+	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
+
+	invServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "report-inventory-rating")
+
+	// call the service by creating a request
+	request, err := http.NewRequest("POST", invServiceUrl, bytes.NewBuffer(jsonData))
+
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set the Content-Type header
+	request.Header.Set("Content-Type", "application/json")
+	//create a http client
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		log.Println(err)
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	// create a varabiel we'll read response.Body into
+	var jsonFromService jsonResponse
+
+	// decode the json from the auth service
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = jsonFromService.Error
+	payload.StatusCode = jsonFromService.StatusCode
+	payload.Message = jsonFromService.Message
+	payload.Data = jsonFromService.Data
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
 //TODO
 // 1. format role & permission into separate arrays - done
 // 2. Try adding additional permission to a user - done

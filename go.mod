@@ -12,7 +12,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/obynonwane/rental-service-proto v0.0.0-20250730213259-97bb81c038ab
+	github.com/obynonwane/rental-service-proto v0.0.0-20250824125814-f7c8b6d3788a
 	github.com/prometheus/client_golang v1.20.2
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.5.3

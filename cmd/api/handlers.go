@@ -3653,6 +3653,8 @@ func (app *Config) DeleteSaveInventory(w http.ResponseWriter, r *http.Request) {
 	userId := user.Data.(map[string]interface{})["user"].(map[string]interface{})["id"].(string)
 	requestPayload.UserId = userId
 
+	log.Printf("Payload: - %v", requestPayload)
+
 	//create some json we will send to authservice
 	jsonData, _ := json.MarshalIndent(requestPayload, "", "\t")
 

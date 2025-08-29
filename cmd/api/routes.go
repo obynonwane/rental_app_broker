@@ -94,9 +94,11 @@ func (app *Config) routes() http.Handler {
 	//Booking routes---------------------------------------------------//
 	mux.Post("/api/v1/booking/create-booking", app.CreateBooking)
 	mux.Get("/api/v1/booking/my-booking", app.MyBookings)
+	mux.Get("/api/v1/booking/booking-requests", app.GetBookingRequest)
 
 	mux.Post("/api/v1/purchase/create-order", app.CreatePrurchaseOrder)
 	mux.Get("/api/v1/purchase/my-purchase", app.MyPurchase)
+	mux.Get("/api/v1/purchase/purchase-requests", app.GetPurchaseRequest)
 
 	mux.Get("/api/v1/inventory/my-inventories", app.MyInventories)
 

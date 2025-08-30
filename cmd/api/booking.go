@@ -315,3 +315,63 @@ func (app *Config) GetBookingRequest(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 
 }
+
+func (app *Config) GetPendingBookingCount(w http.ResponseWriter, r *http.Request) {
+	// verify the user token
+	user, err := app.getToken(r)
+	if err != nil {
+		app.errorJSON(w, err, user.Data, http.StatusUnauthorized)
+		return
+	}
+
+	if user.Error {
+		app.errorJSON(w, errors.New(user.Message), user.Data, user.StatusCode)
+		return
+	}
+
+	userId := user.Data.(map[string]interface{})["user"].(map[string]interface{})["id"].(string)
+
+	// Build the full URL with query param
+	baseUrl := os.Getenv("INVENTORY_SERVICE_URL") + "pending-booking-count"
+	reqUrl := fmt.Sprintf("%s?userId=%s", baseUrl, userId)
+
+	// Create the GET request with the query param
+	request, err := http.NewRequest("GET", reqUrl, nil)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	// Set headers
+	request.Header.Set("Content-Type", "application/json")
+
+	// Execute the request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+	defer response.Body.Close()
+
+	var jsonFromService jsonResponse
+	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
+	if err != nil {
+		app.errorJSON(w, err, nil)
+		return
+	}
+
+	if response.StatusCode != http.StatusAccepted {
+		app.errorJSON(w, errors.New(jsonFromService.Message), nil, response.StatusCode)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:      jsonFromService.Error,
+		StatusCode: jsonFromService.StatusCode,
+		Message:    jsonFromService.Message,
+		Data:       jsonFromService.Data,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
+}

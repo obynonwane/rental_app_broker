@@ -96,6 +96,9 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/booking/create-booking", app.CreateBooking)
 	mux.Get("/api/v1/booking/my-booking", app.MyBookings)
 	mux.Get("/api/v1/booking/booking-requests", app.GetBookingRequest)
+	mux.Get("/api/v1/booking/pending-booking-count", app.GetPendingBookingCount)
+
+	mux.Get("/api/v1/purchase/pending-purchase-count", app.GetPendingPurchaseCount)
 
 	mux.Post("/api/v1/purchase/create-order", app.CreatePrurchaseOrder)
 	mux.Get("/api/v1/purchase/my-purchase", app.MyPurchase)

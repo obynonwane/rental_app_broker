@@ -56,9 +56,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/send-email", app.TestEmail)
 
 	//Inventory routes---------------------------------------------------//
-	mux.Get("/api/v1/inventory/getusers", app.GetUsers)
 	mux.Post("/api/v1/inventory/create-inventory", app.CreateInventory)
-	mux.Get("/api/v1/inventory/getusers-grpc", app.GetUsersViaGrpc)
 	mux.Get("/api/v1/inventory/all-categories", app.AllCategories)
 	mux.Get("/api/v1/inventory/all-subcategories", app.AllSubcategories)
 	mux.Get("/api/v1/inventory/category/subcategory/{id}", app.GetCategorySubcategories)
@@ -135,6 +133,19 @@ func (app *Config) routes() http.Handler {
 	mux.Get("/api/v1/subscription/activate-subscription", app.ActivateSubscription)
 	mux.Get("/api/v1/subscription/subscription-history", app.GetSubscriptionHistory)
 	mux.Get("/api/v1/subscription/plans", app.GetPlans)
+
+	// Admin Endpoints
+	mux.Post("/api/v1/admin/pending-inventories", app.AdminGetInventoryPendingApproval)
+	mux.Get("/api/v1/admin/approve-inventory/{id}", app.AdminApproveInventory)
+	mux.Get("/api/v1/admin/active-subscriptions", app.AdminGetActiveSubscriptions)
+	mux.Get("/api/v1/admin/getusers", app.AdminGetUsers)
+	mux.Get("/api/v1/admin/dasboard-card", app.AdminGetDashboardCard)
+	mux.Get("/api/v1/admin/amount-made-bydate/{date}", app.AdminGetAmountMadeByDate)
+	mux.Get("/api/v1/admin/users-joined-bydate/{date}", app.AdminGetUsersJoinedByDate)
+	mux.Get("/api/v1/admin/inventory-created-bydate/{date}", app.AdminGetInventoryCreatedByDate)
+	mux.Post("/api/v1/admin/analytics/user-registrations", app.GetUserRegistrationStats)
+	mux.Post("/api/v1/admin/analytics/inventory-creations", app.GetInventoryCreationStats)
+	mux.Post("/api/v1/admin/analytics/subscription-amount", app.GetSubscriptionAmountStats)
 
 	return mux
 }

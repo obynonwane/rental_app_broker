@@ -146,6 +146,7 @@ func (app *Config) routes() http.Handler {
 	mux.Post("/api/v1/admin/analytics/user-registrations", app.GetUserRegistrationStats)
 	mux.Post("/api/v1/admin/analytics/inventory-creations", app.GetInventoryCreationStats)
 	mux.Post("/api/v1/admin/analytics/subscription-amount", app.GetSubscriptionAmountStats)
+	mux.Post("/api/v1/admin/get-businesses", app.GetBusinesses)
 
 	return mux
 }

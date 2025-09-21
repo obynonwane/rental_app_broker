@@ -650,73 +650,9 @@ func (app *Config) TestEmail(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
-func (app *Config) GetUsers(w http.ResponseWriter, r *http.Request) {
 
-	response, err := app.getToken(r)
-	if err != nil {
-		app.errorJSON(w, err, response.Data, http.StatusUnauthorized)
-		return
-	}
 
-	if response.Error {
-		app.errorJSON(w, errors.New(response.Message), response.Data, response.StatusCode)
-		return
-	}
 
-	app.proceedGetUser(w)
-}
-
-func (app *Config) proceedGetUser(w http.ResponseWriter) {
-
-	authServiceUrl := fmt.Sprintf("%s%s", os.Getenv("INVENTORY_SERVICE_URL"), "getusers")
-	log.Println("The endpoint:", authServiceUrl)
-
-	// Call the service by creating a request
-	request, err := http.NewRequest("GET", authServiceUrl, nil)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	// Set the Content-Type header
-	request.Header.Set("Content-Type", "application/json")
-
-	// Create an HTTP client
-	client := &http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Println(err)
-		app.errorJSON(w, err, nil)
-		return
-	}
-	defer response.Body.Close()
-
-	// Create a variable to read response.Body into
-	var jsonFromService jsonResponse
-
-	// Decode the JSON from the service
-	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-
-	// Check if the status code is Accepted
-	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("unexpected status code received from service"), nil, response.StatusCode)
-		return
-	}
-
-	// Prepare the payload
-	var payload jsonResponse
-	payload.Error = jsonFromService.Error
-	payload.StatusCode = http.StatusOK
-	payload.Message = jsonFromService.Message
-	payload.Data = jsonFromService.Data
-
-	// Write the JSON response
-	app.writeJSON(w, http.StatusOK, payload)
-}
 
 func (app *Config) ParticipantCreateStaff(w http.ResponseWriter, r *http.Request) {
 
@@ -1948,55 +1884,7 @@ func (app *Config) CreateInventory(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (app *Config) GetUsersViaGrpc(w http.ResponseWriter, r *http.Request) {
-	// get a gRPC client and dial using tcp
-	conn, err := grpc.Dial("inventory-service:50001", grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		app.errorJSON(w, err, nil)
-		return
-	}
-	defer conn.Close()
 
-	c := inventory.NewInventoryServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // Increased timeout
-	defer cancel()
-
-	// Channel to receive the response from the goroutine
-	responseChannel := make(chan *inventory.UserListResponse)
-	errorChannel := make(chan error)
-
-	// Call the GetUsers method asynchronously in a goroutine
-	go func() {
-		data, err := c.GetUsers(ctx, &inventory.EmptyRequest{})
-		if err != nil {
-			errorChannel <- err // Send error to the error channel
-			return
-		}
-		responseChannel <- data // Send the response to the response channel
-	}()
-
-	// Wait for either the response, error, or timeout to be sent through the channels
-	select {
-	case data := <-responseChannel:
-		// Successfully received the data, prepare the response
-		var payload jsonResponse
-		payload.Error = false
-		payload.Message = "User details retrieved successfully"
-		payload.Data = data.Users
-
-		app.writeJSON(w, http.StatusAccepted, payload)
-
-	case err := <-errorChannel:
-		// If there was an error calling the gRPC method, handle it
-		log.Println("Error retrieving users:", err)
-		app.errorJSON(w, err, nil)
-
-	case <-ctx.Done():
-		// If the operation timed out, handle the timeout error
-		log.Println("Error: gRPC request timed out")
-		app.errorJSON(w, fmt.Errorf("gRPC request timed out"), nil)
-	}
-}
 
 func (app *Config) AllCategories(w http.ResponseWriter, r *http.Request) {
 
